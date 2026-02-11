@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "automaweb"
-version = "0.1.3"
+version = "0.1.6"
 description = "Biblioteca para automatização web com Selenium e Edge"
 readme = "README.md"
 authors = [{ name = "João Braga"}]
