@@ -3,5 +3,5 @@ automaweb.egg-info/PKG-INFO
 automaweb.egg-info/requires.txt
 automaweb.egg-info/SOURCES.txt
 automaweb.egg-info/top_level.txt
-dist/automaweb-0.1.3-py3-none-any.whl
-dist/automaweb-0.1.3.tar.gz
+*.whl
+*.gz
