@@ -70,7 +70,6 @@ class Navegador:
 
     def abrir_driver(self, headless=False):
         
-        self.wait = WebDriverWait(self.driver, 10) #inicializa o WebDriverWait com o driver e um timeout padrão de 10 segundos
         #inicializa o driver
         try:
             #inicializa o driver e configura as opções do navegador.
@@ -85,6 +84,7 @@ class Navegador:
                 edge_options.add_argument("--headless=new") 
             self.driver = webdriver.Edge(options=edge_options)
             self.driver.maximize_window()
+            self.wait = WebDriverWait(self.driver, 10) #inicializa o WebDriverWait com o driver e um timeout padrão de 10 segundos
 
         except Exception as e:
             print(f"Erro ao iniciar o driver: {e}")
@@ -93,11 +93,15 @@ class Navegador:
     def abrir_url(self, url):
 
         #abre uma URL (precisa iniciar o driver primeiro).
-        try:
-            self.driver.get(url)
-        except Exception as e:
-            print(f"Erro ao abrir URL: {e}")
-            raise
+
+        if self.driver is None:
+            messagebox.showerror("Erro", "O driver não foi iniciado. Use abrir_driver() antes de abrir uma URL.")
+        else:
+            try:
+                self.driver.get(url)
+            except Exception as e:
+                print(f"Erro ao abrir URL: {e}")
+                raise
     
     def abrir_nova_aba(self, url):
         
