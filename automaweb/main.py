@@ -114,38 +114,35 @@ class Navegador:
     @_verifica_driver
     def abrir_url(self, url):
 
-        if self.verifica_driver():
-            #abre uma URL (precisa iniciar o driver primeiro).
-            try:
-                self.driver.get(url)
-            except Exception as e:
-                print(f"Erro ao abrir URL: {e}")
-                raise
+        #abre uma URL (precisa iniciar o driver primeiro).
+        try:
+            self.driver.get(url)
+        except Exception as e:
+            print(f"Erro ao abrir URL: {e}")
+            raise
     
     @_verifica_driver
     def abrir_nova_aba(self, url):
 
-        if self.verifica_driver():
-            #abre uma nova aba e foca nela automaticamente.
-            try:
-                # 'tab' abre uma aba. 'window' abriria uma nova janela separada.
-                self.driver.switch_to.new_window('tab') 
-                self.driver.get(url)
-            except Exception as e:
-                print(f"Erro ao abrir nova aba: {e}")
-                raise
+        #abre uma nova aba e foca nela automaticamente.
+        try:
+            # 'tab' abre uma aba. 'window' abriria uma nova janela separada.
+            self.driver.switch_to.new_window('tab') 
+            self.driver.get(url)
+        except Exception as e:
+            print(f"Erro ao abrir nova aba: {e}")
+            raise
     
     @_verifica_driver
     def alternar_aba(self, indice):
 
-        if self.verifica_driver():
-            #muda o foco para a aba especificada pelo índice (0 é a primeira, 1 é a segunda...).
-            try:
-                abas = self.driver.window_handles
-                self.driver.switch_to.window(abas[indice])
-            except Exception as e:
-                print(f"Erro ao mudar para a aba {indice}: {e}")
-                raise
+        #muda o foco para a aba especificada pelo índice (0 é a primeira, 1 é a segunda...).
+        try:
+            abas = self.driver.window_handles
+            self.driver.switch_to.window(abas[indice])
+        except Exception as e:
+            print(f"Erro ao mudar para a aba {indice}: {e}")
+            raise
 
     @_verifica_driver  
     def fechar_aba(self):
