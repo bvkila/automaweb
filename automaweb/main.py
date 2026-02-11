@@ -19,6 +19,7 @@ import time
 import os
 import shutil
 from tkinter import filedialog
+from functools import wraps
 
 class Navegador:
 
@@ -57,14 +58,34 @@ class Navegador:
 
     def __init__(self, tempo_stun=0):
         
-        self.driver = None
-        self.wait = None
-        self.stun = tempo_stun
+        self.driver = None #driver do navegador
+        self.wait = None #espera do driver
+        self.stun = tempo_stun #tempo de stun entre as ações (em segundos)
 
-    def aplicar_stun(self):
+    def _aplicar_stun(self):
 
-        #espera tempo_stun segundos
+        #função interna que espera tempo_stun segundos
         time.sleep(self.stun)
+
+    @staticmethod
+    def _verifica_driver(func):
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            
+            #criando um decorador para verificar se o driver foi inicializado antes de executar a função decorada.
+            if self.driver is None or self.wait is None:
+                messagebox.showerror(
+                    "Erro Crítico", 
+                    f"Tentativa de executar '{func.__name__}' sem driver.\nUse abrir_driver() primeiro."
+                )
+                return None  #cancela a ação original aqui
+            
+            #se passou no if acima, executamos a função original passando os argumentos
+            return func(self, *args, **kwargs)
+        
+        #o decorador devolve o wrapper para substituir a função original
+        return wrapper
  
 ### NAVEGAÇÕES DENTRO DO DRIVER
 
@@ -90,40 +111,43 @@ class Navegador:
             print(f"Erro ao iniciar o driver: {e}")
             raise
 
+    @_verifica_driver
     def abrir_url(self, url):
 
-        #abre uma URL (precisa iniciar o driver primeiro).
-
-        if self.driver is None:
-            messagebox.showerror("Erro", "O driver não foi iniciado. Use abrir_driver() antes de abrir uma URL.")
-        else:
+        if self.verifica_driver():
+            #abre uma URL (precisa iniciar o driver primeiro).
             try:
                 self.driver.get(url)
             except Exception as e:
                 print(f"Erro ao abrir URL: {e}")
                 raise
     
+    @_verifica_driver
     def abrir_nova_aba(self, url):
-        
-        #abre uma nova aba e foca nela automaticamente.
-        try:
-            # 'tab' abre uma aba. 'window' abriria uma nova janela separada.
-            self.driver.switch_to.new_window('tab') 
-            self.driver.get(url)
-        except Exception as e:
-            print(f"Erro ao abrir nova aba: {e}")
-            raise
+
+        if self.verifica_driver():
+            #abre uma nova aba e foca nela automaticamente.
+            try:
+                # 'tab' abre uma aba. 'window' abriria uma nova janela separada.
+                self.driver.switch_to.new_window('tab') 
+                self.driver.get(url)
+            except Exception as e:
+                print(f"Erro ao abrir nova aba: {e}")
+                raise
     
+    @_verifica_driver
     def alternar_aba(self, indice):
 
-        #muda o foco para a aba especificada pelo índice (0 é a primeira, 1 é a segunda...).
-        try:
-            abas = self.driver.window_handles
-            self.driver.switch_to.window(abas[indice])
-        except Exception as e:
-            print(f"Erro ao mudar para a aba {indice}: {e}")
-            raise
-        
+        if self.verifica_driver():
+            #muda o foco para a aba especificada pelo índice (0 é a primeira, 1 é a segunda...).
+            try:
+                abas = self.driver.window_handles
+                self.driver.switch_to.window(abas[indice])
+            except Exception as e:
+                print(f"Erro ao mudar para a aba {indice}: {e}")
+                raise
+
+    @_verifica_driver  
     def fechar_aba(self):
     
         #fecha a aba atual e volta o foco para a aba anterior (se houver).    
@@ -138,6 +162,7 @@ class Navegador:
             print(f"Erro ao fechar aba: {e}")
             raise
 
+    @_verifica_driver
     def recarregar_driver(self):
         
         #recarrega (atualiza) a página atual (F5).
@@ -147,6 +172,7 @@ class Navegador:
             print(f"Erro ao recarregar a página: {e}")
             raise
 
+    @_verifica_driver
     def fechar_driver(self):
 
         #fecha o navegador e encerra a sessão do driver.    
@@ -161,7 +187,7 @@ class Navegador:
     def clicar(self, xpath):
     
         #clica em um elemento identificado pelo xpath.
-        self.aplicar_stun()
+        self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             elemento.click()
@@ -172,7 +198,7 @@ class Navegador:
     def digitar(self, xpath, texto):
         
         #digita um texto em um elemento identificado pelo xpath.
-        self.aplicar_stun()
+        self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             elemento.send_keys(texto)
@@ -183,7 +209,7 @@ class Navegador:
     def limpar(self, xpath):
 
         #limpa o conteúdo de um elemento de entrada.
-        self.aplicar_stun()
+        self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             elemento.clear()
@@ -194,7 +220,7 @@ class Navegador:
     def passar_mouse(self, xpath):
         
         #simula a ação de mover o cursor do mouse sobre o elemento (Hover).
-        self.aplicar_stun()
+        self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             actions = ActionChains(self.driver)
@@ -206,7 +232,7 @@ class Navegador:
     def selecionar_texto(self, xpath, texto):
 
         #seleciona um texto dentro de um elemento.
-        self.aplicar_stun()
+        self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             Select(elemento).select_by_visible_text(texto)
@@ -217,7 +243,7 @@ class Navegador:
     def selecionar_valor(self, xpath, valor):
 
         #seleciona um valor dentro de um elemento.
-        self.aplicar_stun()
+        self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             Select(elemento).select_by_value(valor)
