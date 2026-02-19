@@ -3,65 +3,41 @@ biblioteca destinada à automatização de tarefas na web
 bem como interações com o gerenciamento de arquivos no computador
 """
 
-from selenium import webdriver
-from selenium.webdriver.edge.options import Options
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
+#bibliotecas do Selenium para controle do navegador e interações com a página
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from selenium import webdriver
+
+#biblioteca para criar decoradores e 
+from functools import wraps
+from typing import Literal
+
+#biblioteca para interface gráfica
 from tkinter import messagebox
+from tkinter import filedialog
 import tkinter as tk
+
+#bibliotecas para manipulação de arquivos e pastas
+import datetime
+import shutil
 import time
 import json
-from tkinter import messagebox
-import time
 import os
-import shutil
-from tkinter import filedialog
-from functools import wraps
-import datetime
 
 class Navegador:
 
-    '''
-    A seguinte classe fornece uma base robusta para tarefas comuns de RPA (Robotic Process Automation) dentro da web.
-    Sua estrutura consiste em:
-
-    1. NAVEGAÇÕES DENTRO DO DRIVER
-    
-    Gerenciamento de Driver: inicialização otimizada do Microsoft Edge, incluindo suporte para modo Headless (segundo plano).
-    Controle de Abas: abertura, troca e fechamento inteligente de abas.
-    
-    
-    2. INTERAÇÕES COM A PÁGINA
-
-    Interações Avançadas: cliques, digitação (com limpeza automática), Hover (passar o mouse) e seleção de dropdowns.
-    Tratamento de Esperas: uso nativo de `WebDriverWait` para garantir que os elementos existam antes da interação, reduzindo erros de sincronismo.
-    Captura de Tela: método integrado para screenshots de auditoria.
-    Suporte a Iframes: facilidade para entrar e sair de contextos de frames.
-
-    3. VERIFICAÇÕES
-
-    Verificação de Textos: verifica se um texto específico existe na página.
-    Verificação de Elementos: verifica se um elemento específico existe na página.
-
-    Observaçoes:
-
-    - Existe um controle de erro em todas as funções; caso ela não ocorra da maneira esperada,
-    um print vai mostrar o que não saiu como o esperado. No entanto, o raise é utilizado para
-    não dar erro na execução da automação.
-
-    - As funções de verificações retornam resultados booleanos.
-
-
-    '''
-
-    def __init__(self, tempo_stun: float = 0):
+    def __init__(self, tempo_stun: float = 0, navegador: Literal["edge", "chrome", "firefox" ] = "edge"):
         
         self.driver = None #driver do navegador
         self.wait = None #espera do driver
         self.stun = tempo_stun #tempo de stun entre as ações (em segundos)
+        self.navegador = navegador.lower() #tipo do navegador (edge, chrome ou firefox)
 
     def _aplicar_stun(self):
 
@@ -91,31 +67,59 @@ class Navegador:
 ### NAVEGAÇÕES DENTRO DO DRIVER
 
     def abrir_driver(self, headless: bool = False):
-        
         '''
-        Inicializa o navegador Microsoft Edge com opções otimizadas para automação,
-        incluindo suporte para modo headless (sem interface gráfica).
+        Inicializa o driver baseado na escolha feita no __init__ (Edge, Chrome ou Firefox).
 
         Args:
             headless (bool): Se True, o navegador será iniciado em modo headless. Padrão é False.
         '''
         try:
-            #inicializa o driver e configura as opções do navegador.
-            edge_options = Options()
-            edge_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            edge_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-            edge_options.add_experimental_option('useAutomationExtension', False)
-            edge_options.add_argument("--log-level=3")
+            if self.navegador == "chrome":
+                
+                options = ChromeOptions()
+                #configurações anti-detecção e log
+                options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                options.add_experimental_option('useAutomationExtension', False)
+                options.add_argument("--log-level=3")
+                options.add_argument("--start-maximized")
+                if headless:
+                    options.add_argument("--headless=new")
+                self.driver = webdriver.Chrome(options=options)
+
+            elif self.navegador == "firefox":
+                
+                options = FirefoxOptions()
+                #configurações anti-detecção e log
+                options.set_preference("dom.webdriver.enabled", False)
+                options.set_preference("useAutomationExtension", False)
+                options.log.level = "fatal" #reduz o nível de log do Geckodriver para evitar poluição no terminal                
+                if headless:
+                    options.add_argument("-headless")
+                self.driver = webdriver.Firefox(options=options)
+
+            elif self.navegador == "edge":
+                
+                options = EdgeOptions()
+                #configurações anti-detecção e log
+                options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                options.add_experimental_option('useAutomationExtension', False)
+                options.add_argument("--log-level=3")
+                options.add_argument("--start-maximized")
+                if headless:
+                    options.add_argument("--headless=new")
+                self.driver = webdriver.Edge(options=options)
             
-            #se headless for verdadeiro, configura o driver para rodar em modo headless
-            if headless:
-                edge_options.add_argument("--headless=new") 
-            self.driver = webdriver.Edge(options=edge_options)
+            else:
+                raise ValueError(f"Navegador '{self.navegador}' não suportado. Escolha entre: edge, chrome, firefox.")
+
+            #configurações globais após iniciar o driver
             self.driver.maximize_window()
-            self.wait = WebDriverWait(self.driver, 10) #inicializa o WebDriverWait com o driver e um timeout padrão de 10 segundos
+            self.wait = WebDriverWait(self.driver, 10)
 
         except Exception as e:
-            print(f"Erro ao iniciar o driver: {e}")
+            print(f"Erro ao iniciar o driver ({self.navegador}): {e}")
             raise
 
     @_verifica_driver
