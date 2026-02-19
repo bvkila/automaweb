@@ -20,6 +20,7 @@ import os
 import shutil
 from tkinter import filedialog
 from functools import wraps
+import datetime
 
 class Navegador:
 
@@ -56,7 +57,7 @@ class Navegador:
 
     '''
 
-    def __init__(self, tempo_stun=0):
+    def __init__(self, tempo_stun: float = 0):
         
         self.driver = None #driver do navegador
         self.wait = None #espera do driver
@@ -64,7 +65,7 @@ class Navegador:
 
     def _aplicar_stun(self):
 
-        #função interna que espera tempo_stun segundos
+        '''função interna que espera tempo_stun segundos'''
         time.sleep(self.stun)
 
     @staticmethod
@@ -89,9 +90,15 @@ class Navegador:
  
 ### NAVEGAÇÕES DENTRO DO DRIVER
 
-    def abrir_driver(self, headless=False):
+    def abrir_driver(self, headless: bool = False):
         
-        #inicializa o driver
+        '''
+        Inicializa o navegador Microsoft Edge com opções otimizadas para automação,
+        incluindo suporte para modo headless (sem interface gráfica).
+
+        Args:
+            headless (bool): Se True, o navegador será iniciado em modo headless. Padrão é False.
+        '''
         try:
             #inicializa o driver e configura as opções do navegador.
             edge_options = Options()
@@ -112,9 +119,14 @@ class Navegador:
             raise
 
     @_verifica_driver
-    def abrir_url(self, url):
+    def abrir_url(self, url: str):
 
-        #abre uma URL (precisa iniciar o driver primeiro).
+        '''
+        Abre uma URL (precisa iniciar o driver primeiro).
+        
+        Args:
+            url (str): A URL que deseja abrir no navegador.
+        '''
         try:
             self.driver.get(url)
         except Exception as e:
@@ -122,9 +134,14 @@ class Navegador:
             raise
     
     @_verifica_driver
-    def abrir_nova_aba(self, url):
+    def abrir_nova_aba(self, url: str):
 
-        #abre uma nova aba e foca nela automaticamente.
+        '''
+        Abre uma nova aba e foca nela automaticamente.
+        
+        Args:
+            url (str): A URL que deseja abrir na nova aba.
+        '''
         try:
             # 'tab' abre uma aba. 'window' abriria uma nova janela separada.
             self.driver.switch_to.new_window('tab') 
@@ -134,9 +151,14 @@ class Navegador:
             raise
     
     @_verifica_driver
-    def alternar_aba(self, indice):
+    def alternar_aba(self, indice: int):
 
-        #muda o foco para a aba especificada pelo índice (0 é a primeira, 1 é a segunda...).
+        '''
+        Muda o foco para a aba especificada pelo índice (0 é a primeira, 1 é a segunda...).
+        
+        Args:
+            indice (int): O índice da aba para a qual deseja alternar.
+        '''
         try:
             abas = self.driver.window_handles
             self.driver.switch_to.window(abas[indice])
@@ -147,7 +169,9 @@ class Navegador:
     @_verifica_driver  
     def fechar_aba(self):
     
-        #fecha a aba atual e volta o foco para a aba anterior (se houver).    
+        '''
+        Fecha a aba atual e volta o foco para a aba anterior (se houver).
+        '''  
         try:
             # .close() fecha SÓ a aba atual (diferente de .quit() que fecha tudo)
             self.driver.close()
@@ -162,7 +186,9 @@ class Navegador:
     @_verifica_driver
     def recarregar_driver(self):
         
-        #recarrega (atualiza) a página atual (F5).
+        '''
+        Recarrega (atualiza) a página atual (F5).
+        '''
         try:
             self.driver.refresh()
         except Exception as e:
@@ -172,7 +198,9 @@ class Navegador:
     @_verifica_driver
     def fechar_driver(self):
 
-        #fecha o navegador e encerra a sessão do driver.    
+        '''
+        Fecha o navegador e encerra a sessão do driver.
+        ''' 
         try:
             self.driver.quit()
         except Exception as e:
@@ -181,9 +209,14 @@ class Navegador:
 
 ### INTERAÇÕES COM A PÁGINA
 
-    def clicar(self, xpath):
+    def clicar(self, xpath: str):
     
-        #clica em um elemento identificado pelo xpath.
+        '''
+        Clica em um elemento identificado pelo xpath.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja clicar.
+        '''
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
@@ -192,9 +225,15 @@ class Navegador:
             print(f"Erro ao clicar no elemento: {e}")
             raise
 
-    def digitar(self, xpath, texto):
+    def digitar(self, xpath: str, texto: str):
         
-        #digita um texto em um elemento identificado pelo xpath.
+        '''
+        Digita um texto em um elemento identificado pelo xpath.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja digitar.
+            texto (str): O texto que deseja digitar no elemento.
+        '''
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
@@ -203,9 +242,14 @@ class Navegador:
             print(f"Erro ao digitar no elemento: {e}")
             raise
     
-    def limpar(self, xpath):
+    def limpar(self, xpath: str):
 
-        #limpa o conteúdo de um elemento de entrada.
+        '''
+        Limpa o conteúdo de um elemento de entrada.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja limpar.
+        '''
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
@@ -214,9 +258,14 @@ class Navegador:
             print(f"Erro ao limpar o elemento: {e}")
             raise
     
-    def passar_mouse(self, xpath):
+    def passar_mouse(self, xpath: str):
         
-        #simula a ação de mover o cursor do mouse sobre o elemento (Hover).
+        '''
+        Simula a ação de mover o cursor do mouse sobre o elemento (Hover).
+        
+        Args:
+            xpath (str): O XPath do elemento sobre o qual deseja passar o mouse.
+        '''
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
@@ -226,9 +275,15 @@ class Navegador:
             print(f"Erro ao passar o mouse sobre o elemento: {e}")
             raise
     
-    def selecionar_texto(self, xpath, texto):
+    def selecionar_texto(self, xpath: str, texto: str):
 
-        #seleciona um texto dentro de um elemento.
+        '''
+        Seleciona um texto dentro de um elemento.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja selecionar o texto.
+            texto (str): O texto que deseja selecionar dentro do elemento.
+        '''
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
@@ -237,9 +292,15 @@ class Navegador:
             print(f"Erro ao selecionar o texto {texto}: {e}")
             raise
 
-    def selecionar_valor(self, xpath, valor):
+    def selecionar_valor(self, xpath: str, valor: int):
 
-        #seleciona um valor dentro de um elemento.
+        '''
+        Seleciona um valor dentro de um elemento.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja selecionar o valor.
+            valor (int): O valor que deseja selecionar dentro do elemento.
+        '''
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
@@ -248,9 +309,17 @@ class Navegador:
             print(f"Erro ao selecionar o valor {valor}: {e}")
             raise
     
-    def obter_texto(self, xpath):
+    def obter_texto(self, xpath: str):
 
-        #obtém o texto de um elemento.
+        '''
+        Obtém o texto de um elemento.
+        
+        Args:
+            xpath (str): O XPath do elemento do qual deseja obter o texto.
+
+        Returns:
+            str: O texto do elemento.
+        '''
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             return elemento.text
@@ -258,9 +327,18 @@ class Navegador:
             print(f"Erro ao obter o texto do elemento: {e}")
             raise
     
-    def obter_atributo(self, xpath, atributo):
+    def obter_atributo(self, xpath: str, atributo: str):
 
-        #obtém o atributo de um elemento.
+        '''
+        Obtém o atributo de um elemento.
+        
+        Args:
+            xpath (str): O XPath do elemento do qual deseja obter o atributo.
+            atributo (str): O nome do atributo que deseja obter. Ex: 'value' para campos de entrada, 'href' para links, etc.
+
+        Returns:
+            str: O valor do atributo do elemento.
+        '''
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             return elemento.get_attribute(atributo)
@@ -268,9 +346,14 @@ class Navegador:
             print(f"Erro ao obter o atributo do elemento: {e}")
             raise
     
-    def rolar_ate_elemento(self, xpath):
+    def rolar_ate_elemento(self, xpath: str):
         
-        #rola a tela até que o elemento específico esteja visível.
+        '''
+        Rola a tela até que o elemento específico esteja visível.
+        
+        Args:
+            xpath (str): O XPath do elemento até o qual deseja rolar a tela.
+        '''
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             self.driver.execute_script("arguments[0].scrollIntoView(true);", elemento)
@@ -278,36 +361,60 @@ class Navegador:
             print(f"Erro ao rolar a tela até o elemento: {e}")
             raise
     
-    def aguardar_elemento_sumir(self, xpath):
+    def aguardar_elemento_sumir(self, xpath: str):
         
-        #aguarda até que o elemento não esteja mais visível.
+        '''
+        Aguarda até que o elemento não esteja mais visível.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja aguardar sumir.
+        '''
         try:
             self.wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
         except Exception as e:
             print(f"Erro ao aguardar o elemento sumir: {e}")
             raise
     
-    def encontrar_elementos(self, xpath):
+    def encontrar_elementos(self, xpath: str):
         
-        #retorna uma lista com todos os elementos identificados pelo xpath.
+        '''
+        Retorna uma lista com todos os elementos identificados pelo xpath.
+        
+        Args:
+            xpath (str): O XPath dos elementos que deseja encontrar.
+            
+        Returns:
+            list: Uma lista com todos os elementos encontrados.
+        '''
         try:
             return self.driver.find_elements(By.XPATH, xpath)
         except Exception as e:
             print(f"Erro ao encontrar elementos: {e}")
             raise
 
-    def tirar_screenshot(self, nome_arquivo):
+    def tirar_screenshot(self, nome_arquivo: str = datetime.datetime.now().strftime("screenshot_%Y%m%d_%H%M%S")):
         
-        #salva uma imagem da tela atual.
+        '''
+        Salva uma imagem da tela atual na pasta Downloads.
+        
+        Args:
+            nome_arquivo (str): O nome do arquivo para salvar a screenshot (sem extensão). Padrão é "screenshot_YYYYMMDD_HHMMSS" para evitar sobrescritas.
+        '''
+
         try:
-            self.driver.save_screenshot(f"{nome_arquivo}.png")
+            self.driver.save_screenshot(f"{os.getlogin()}/Downloads/{nome_arquivo}.png")
         except Exception as e:
             print(f"Erro ao tirar screenshot: {e}")
             raise
     
-    def entrar_iframe(self, xpath):
+    def entrar_iframe(self, xpath: str):
         
-        #muda o foco do driver para dentro de um iframe.
+        '''
+        Muda o foco do driver para dentro de um iframe.
+        
+        Args:
+            xpath (str): O XPath do iframe que deseja entrar.
+        '''
         try:
             self.wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, xpath)))
         except Exception as e:
@@ -316,17 +423,27 @@ class Navegador:
 
     def sair_iframe(self):
         
-        #volta o foco para a página principal.
+        '''
+        Volta o foco para a página principal.
+        
+        Args:
+            xpath (str): O XPath do iframe que deseja entrar.
+        '''
         try:
             self.driver.switch_to.default_content()
         except Exception as e:
             print(f"Erro ao sair do iframe: {e}")
             raise
     
-    def salvar_cookies(self, nome_arquivo="cookies.json"):
+    def salvar_cookies(self, nome_arquivo: str = f"{os.getlogin()}/Downloads/cookies.json"):
         
-        #coleta todos os cookies da sessão atual e salva em um arquivo JSON.
-        #útil para manter o login em execuções futuras.
+        '''
+        Coleta todos os cookies da sessão atual e salva em um arquivo JSON.
+        É útil para manter o login em execuções futuras.
+
+        Args:
+            nome_arquivo (str): O nome do arquivo JSON onde os cookies serão salvos. Padrão é "cookies.json" na pasta Downloads.
+        '''
   
         #exibe uma mensagem de aviso para o usuário
         #a ideia é que após clicar em ok, o código prossiga
@@ -349,10 +466,16 @@ class Navegador:
             print(f"Erro ao salvar cookies: {e}")
             raise
     
-    def carregar_cookies(self, nome_arquivo="cookies.json"):
+    def carregar_cookies(self, nome_arquivo: str = f"{os.getlogin()}/Downloads/cookies.json"):
 
-        #carrega os cookies salvos em um arquivo JSON.
-        #a URL precisa já estar carregada para o carregamento funcionar.
+        '''
+        Carrega os cookies salvos em um arquivo JSON.
+
+        Args:
+            nome_arquivo (str): O nome do arquivo JSON de onde os cookies serão carregados. Padrão é "cookies.json" na pasta Downloads.
+        '''
+
+        #a URL precisa já estar carregada para o carregamento funcionar.'''
         try:
             with open(nome_arquivo, 'r') as arquivo:
                 cookies = json.load(arquivo)
@@ -388,14 +511,17 @@ class Navegador:
 
 ### VERIFICAÇÕES
 
-    '''
-    Em algumas das funções, como não dá pra passar o self.timeout no argumento da função,
-    tem-se que passar como None e definir o timeout dentro da função. E se não for seleiconado
-    um valor pro timeout ele usa o self.timeout.
-    '''
 
-    def verifica_selecionado(self, xpath):
-        #verifica se um elemento está selecionado (Retorna True ou False).
+    def verifica_selecionado(self, xpath: str):
+        '''
+        Verifica se um elemento está selecionado (Retorna True ou False).
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja verificar.
+
+        Returns:
+            bool: True se o elemento estiver selecionado, False caso contrário.
+        '''
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             return elemento.is_selected()
@@ -403,8 +529,16 @@ class Navegador:
             print(f"Erro ao verificar se o elemento está selecionado: {e}")
             raise
     
-    def verifica_habilitado(self, xpath):
-        #verifica se um elemento está habilitado (Retorna True ou False).
+    def verifica_habilitado(self, xpath: str):
+        '''
+        Verifica se um elemento está habilitado (Retorna True ou False).
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja verificar.
+
+        Returns:
+            bool: True se o elemento estiver habilitado, False caso contrário.
+        '''
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             return elemento.is_enabled()
@@ -412,8 +546,17 @@ class Navegador:
             print(f"Erro ao verificar se o elemento está habilitado: {e}")
             raise
 
-    def verifica_clicavel(self, xpath, timeout):
-        #verifica se um elemento é clicavel (Retorna True ou False).
+    def verifica_clicavel(self, xpath: str, timeout: float):
+        '''
+        Verifica se um elemento é clicavel (Retorna True ou False).
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja verificar.
+            timeout (float): Tempo máximo de espera para o elemento ser clicável.
+
+        Returns:
+            bool: True se o elemento é clicavel, False caso contrário.
+        '''
         try:
             WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
             return True
@@ -421,16 +564,34 @@ class Navegador:
             print(f"Erro ao verificar se o elemento é clicavel")
             return False
     
-    def verifica_existe(self, xpath, timeout):
-        #verifica se um elemento existe na página (Retorna True ou False).
+    def verifica_existe(self, xpath: str, timeout: float):
+        '''
+        Verifica se um elemento existe na página (Retorna True ou False).
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja verificar.
+            timeout (float): Tempo máximo de espera para o elemento existir.
+
+        Returns:
+            bool: True se o elemento existir, False caso contrário.
+        '''
         try:
             WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
             return True
         except Exception:
             return False
     
-    def verificar_texto_digitado(self, xpath, texto_esperado):
-        #verifica se o texto digitado em um campo é igual ao texto esperado.
+    def verificar_texto_digitado(self, xpath: str, texto_esperado: str ):
+        '''
+        Verifica se o texto digitado em um campo é igual ao texto esperado.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja verificar.
+            texto_esperado (str): O texto esperado.
+
+        Returns:
+            bool: True se o texto digitado for igual ao texto esperado, False caso contrário.
+        '''
         try:
             valor_atual = self.obter_atributo(xpath, 'value')
             return valor_atual == texto_esperado
@@ -438,8 +599,16 @@ class Navegador:
             print(f"Erro ao verificar o texto digitado: {e}")
             raise
     
-    def obter_texto_selecionado(self, xpath):
-        #obtém o texto atualmente selecionado em um elemento select.
+    def obter_texto_selecionado(self, xpath: str):
+        '''
+        Obtém o texto atualmente selecionado em um elemento select.
+        
+        Args:
+            xpath (str): O XPath do elemento (select) que deseja obter o texto selecionado.
+        
+        Returns:
+            str: O texto atualmente selecionado no select.
+        '''
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             selecao = Select(elemento)
@@ -449,8 +618,17 @@ class Navegador:
             print(f"Erro ao obter o texto do select: {e}")
             raise
     
-    def verificar_selecao(self, xpath, texto_esperado):
-        #verifica se o texto atualmente selecionado em um select é igual ao texto esperado.
+    def verificar_selecao(self, xpath: str, texto_esperado: str):
+        '''
+        Verifica se o texto atualmente selecionado em um select é igual ao texto esperado.
+        
+        Args:
+            xpath (str): O XPath do elemento (select) que deseja verificar.
+            texto_esperado (str): O texto esperado.
+        
+        Returns:
+            bool: True se o texto atualmente selecionado for igual ao texto esperado, False caso contrário.
+        '''
         try:
             texto_atual = self.obter_texto_selecionado(xpath)
             return texto_atual == texto_esperado
@@ -460,10 +638,18 @@ class Navegador:
 
 ### MANIPULAÇÃO DE ARQUIVOS
 
-def selecionar_arquivo(self, titulo="Selecione um arquivo", tipos_arquivos=[("Todos os arquivos", "*.*")]):
+def selecionar_arquivo(titulo="Selecione um arquivo", tipos_arquivos=[("Todos os arquivos", "*.*")]):
     
-    #abre uma janela para o usuário escolher um arquivo.
-    #retorna o caminho completo do arquivo ou None (se cancelado).
+    '''
+    Abre uma janela para o usuário escolher um arquivo.
+
+    Args:
+        titulo (str): O cabeçalho da janela de diálogo.
+        tipos_arquivos (list): Uma lista de tuplas contendo os tipos de arquivos e extensões permitidas.
+
+    Returns:
+        str: O caminho completo do arquivo selecionado ou None (se cancelado).
+    '''
     try:
         caminho = filedialog.askopenfilename(
             title=titulo,
@@ -474,10 +660,17 @@ def selecionar_arquivo(self, titulo="Selecione um arquivo", tipos_arquivos=[("To
         print("Erro", f"Erro ao selecionar arquivo: {e}")
         return None
 
-def selecionar_multiplos_arquivos(self, titulo="Selecione os arquivos"):
+def selecionar_multiplos_arquivos(titulo="Selecione os arquivos"):
     
-    #permite selecionar vários arquivos de uma vez.
-    #retorna uma lista de caminhos.
+    '''
+    Permite selecionar vários arquivos de uma vez.
+
+    Args:
+        titulo (str): O cabeçalho da janela de diálogo.
+
+    Returns:
+        list: Uma lista de caminhos completos dos arquivos selecionados ou uma lista vazia (se cancelado).
+    '''
     try:
         arquivos = filedialog.askopenfilenames(title=titulo)
         return list(arquivos) if arquivos else []
@@ -485,11 +678,18 @@ def selecionar_multiplos_arquivos(self, titulo="Selecione os arquivos"):
         print("Erro", f"Erro ao selecionar arquivos: {e}")
         return []
 
-def renomear_arquivo(self, caminho_atual, novo_nome):
+def renomear_arquivo(caminho_atual, novo_nome):
     
-    #renomeia um arquivo mantendo-o na mesma pasta.
-    #'caminho_atual' deve ser o path completo.
-    #'novo_nome' deve ser apenas o nome do arquivo com extensão (ex: "relatorio_final.pdf").
+    '''
+    Renomeia um arquivo mantendo-o na mesma pasta.
+
+    Args:
+        caminho_atual (str): O caminho completo do arquivo que deseja renomear.
+        novo_nome (str): O novo nome para o arquivo.
+
+    Returns:
+        str: O caminho completo do arquivo renomeado.
+    '''
     try:
         diretorio = os.path.dirname(caminho_atual)
         novo_caminho = os.path.join(diretorio, novo_nome)
@@ -500,28 +700,44 @@ def renomear_arquivo(self, caminho_atual, novo_nome):
     except Exception as e:
         print(f"Erro ao renomear arquivo {caminho_atual}: {e}")
 
-def mover_arquivo(self, origem, destino):
+def mover_arquivo(origem, destino):
     
-    #move um arquivo de 'origem' para 'destino'.
-    #o destino pode ser uma pasta ou um novo caminho completo de arquivo.
+    '''
+    Move um arquivo de 'origem' para 'destino'.
+
+    Args:
+        origem (str): O caminho completo do arquivo que deseja mover.
+        destino (str): O caminho completo para onde o arquivo será movido.
+    '''
     try:
         shutil.move(origem, destino)
         print(f"Arquivo movido de {origem} para {destino}")
     except Exception as e:
         print(f"Erro ao mover arquivo: {e}")
 
-def copiar_arquivo(self, origem, destino):
+def copiar_arquivo(origem, destino):
     
-    #copia um arquivo mantendo os metadados (datas de criação, etc).
+    '''
+    Copia um arquivo mantendo os metadados (datas de criação, etc).
+    
+    Args:
+        origem (str): O caminho completo do arquivo a ser copiado.
+        destino (str): O caminho completo para onde o arquivo será copiado.
+    '''
     try:
         shutil.copy2(origem, destino)
         print(f"Arquivo copiado para {destino}")
     except Exception as e:
         print(f"Erro ao copiar arquivo: {e}")
 
-def excluir_arquivo(self, caminho):
+def excluir_arquivo(caminho):
     
-    #remove um arquivo permanentemente.
+    '''
+    Remove um arquivo permanentemente.
+    
+    Args:
+        caminho (str): O caminho completo do arquivo que deseja excluir.
+    '''
     try:
         if os.path.exists(caminho):
             os.remove(caminho)
@@ -531,9 +747,13 @@ def excluir_arquivo(self, caminho):
     except Exception as e:
         print(f"Erro ao excluir arquivo: {e}")
 
-def aguardar_arquivo(caminho_arquivo, timeout=20):
+def aguardar_arquivo(caminho_arquivo: str, timeout=20):
     '''
-    aguarda até que um arquivo exista no caminho especificado ou até que o tempo limite seja atingido
+    Aguarda até que um arquivo exista no caminho especificado ou até que o tempo limite seja atingido.
+
+    Args:
+        caminho_arquivo (str): O caminho completo do arquivo que deseja aguardar.
+        timeout (int): O tempo máximo de espera em segundos. Padrão é 20 segundos.
     '''
     inicio = time.time()
     while not os.path.exists(caminho_arquivo):
@@ -542,10 +762,17 @@ def aguardar_arquivo(caminho_arquivo, timeout=20):
 
 ### GERENCIAMENTO DE PASTAS
 
-def selecionar_pasta(self, titulo="Selecione uma pasta"):
+def selecionar_pasta(titulo="Selecione uma pasta"):
     
-    #abre uma janela para o usuário escolher um diretório.
-    #retorna o caminho da pasta ou None (se cancelado).
+    '''
+    Abre uma janela para o usuário escolher um diretório.
+
+    Args:
+        titulo (str): O título da janela de seleção de pasta.
+
+    Returns:
+        str: O caminho completo da pasta selecionada ou None (se cancelado).
+    '''
     try:
         pasta = filedialog.askdirectory(title=titulo)
         return pasta if pasta else None
@@ -553,20 +780,33 @@ def selecionar_pasta(self, titulo="Selecione uma pasta"):
         print("Erro", f"Erro ao selecionar pasta: {e}")
         return None
 
-def criar_pasta(self, caminho_pasta):
+def criar_pasta(caminho_pasta: str):
     
-    #cria uma pasta (e subpastas se necessário). 
-    #exist_ok=True evita erro se a pasta já existir.
+    '''
+    Cria uma pasta (e subpastas se necessário).
+    
+    Args:
+        caminho_pasta (str): O caminho completo da pasta que deseja criar.
+    '''
+    #exist_ok=True evita erro se a pasta já existir.'''
     try:
         os.makedirs(caminho_pasta, exist_ok=True)
         print(f"Pasta garantida: {caminho_pasta}")
     except Exception as e:
         print(f"Erro ao criar pasta: {e}")
 
-def listar_arquivos(self, diretorio, extensao=None):
+def listar_arquivos(diretorio: str, extensao=None):
     
-    #retorna uma lista com os nomes dos arquivos no diretório.
-    #se 'extensao' for informado (ex: '.pdf'), filtra a lista.
+    '''
+    Retorna uma lista com os nomes dos arquivos no diretório.
+
+    Args:
+        diretorio (str): O caminho do diretório onde deseja listar os arquivos.
+        extensao (str, opcional): Se fornecido, filtra os arquivos por extensão (ex: '.pdf').
+    
+    Returns:
+        list: Uma lista com os nomes dos arquivos encontrados no diretório (filtrados por extensão se especificado).
+    '''
     try:
         arquivos = os.listdir(diretorio)
         if extensao:
@@ -576,9 +816,18 @@ def listar_arquivos(self, diretorio, extensao=None):
         print(f"Erro ao listar arquivos em {diretorio}: {e}")
         return []
 
-def listar_recursivo(self, diretorio, extensao=None):
+def listar_recursivo(diretorio: str, extensao=None):
     
-    #lista TODOS os arquivos, incluindo os que estão em subpastas
+    '''
+    Lista todos os arquivos, incluindo os que estão em subpastas.
+    
+    Args:
+        diretorio (str): O caminho do diretório onde deseja listar os arquivos.
+        extensao (str, opcional): Se fornecido, filtra os arquivos por extensão.
+    
+    Returns:
+        list: Uma lista com os caminhos completos dos arquivos encontrados no diretório e subdiretórios (filtrados por extensão se especificado).
+    '''
     arquivos_encontrados = []
     try:
         for raiz, diretorios, arquivos in os.walk(diretorio):
@@ -590,14 +839,27 @@ def listar_recursivo(self, diretorio, extensao=None):
         print("Erro", f"Erro na busca recursiva: {e}")
         return []
 
-def pasta_esta_vazia(self, caminho_pasta):
+def pasta_esta_vazia(caminho_pasta: str):
     
-    #verifica se uma pasta não contém arquivos ou subpastas
+    '''
+    Verifica se uma pasta não contém arquivos ou subpastas.
+    
+    Args:
+        caminho_pasta (str): O caminho da pasta que deseja verificar.
+
+    Returns:
+        bool: True se a pasta estiver vazia, False caso contrário.
+    '''
     return not any(os.scandir(caminho_pasta))
 
-def excluir_pasta_completa(self, caminho_pasta):
+def excluir_pasta_completa(caminho_pasta: str):
     
-    #remove a pasta e todo o seu conteúdo (arquivos e subpastas)
+    '''
+    Remove a pasta e todo o seu conteúdo (arquivos e subpastas).
+    
+    Args:
+        caminho_pasta (str): O caminho da pasta que deseja excluir.
+    '''
     try:
         if os.path.exists(caminho_pasta):
             shutil.rmtree(caminho_pasta)
@@ -607,37 +869,65 @@ def excluir_pasta_completa(self, caminho_pasta):
     except Exception as e:
         print("Erro", f"Erro ao excluir pasta: {e}")
 
-def compactar_para_zip(self, caminho_origem, nome_zip):
+def compactar_para_zip(caminho_origem: str, nome_arquivo: str):
     
-    #cria um arquivo .zip de uma pasta ou arquivo
-    #nome_zip não deve conter a extensão .zip ao final
+    '''
+    Cria um arquivo .zip de uma pasta ou arquivo.
+    
+    Args:
+        caminho_origem (str): O caminho da pasta ou arquivo que deseja compactar.
+        nome_arquivo (str): O nome do arquivo .zip que deseja criar (sem extensão).
+    '''
     try:
-        shutil.make_archive(nome_zip, 'zip', caminho_origem)
-        messagebox.showinfo("Sucesso", f"Arquivo {nome_zip}.zip criado!")
+        shutil.make_archive(nome_arquivo, 'zip', caminho_origem)
+        messagebox.showinfo("Sucesso", f"Arquivo {nome_arquivo}.zip criado!")
     except Exception as e:
         print("Erro", f"Erro ao compactar: {e}")
 
-def descompactar_zip(self, arquivo_zip, destino):
+def descompactar_zip(arquivo_zip: str, caminho_destino: str):
     
-    #extrai o conteúdo de um arquivo .zip
+    '''
+    Extrai o conteúdo de um arquivo .zip.
+    
+    Args:
+        arquivo_zip (str): O caminho completo do arquivo .zip que deseja descompactar.
+        destino (str): O caminho da pasta onde o conteúdo será extraído.
+    '''
     try:
-        shutil.unpack_archive(arquivo_zip, destino)
-        messagebox.showinfo("Sucesso", f"Extraído em: {destino}")
+        shutil.unpack_archive(arquivo_zip, caminho_destino)
+        messagebox.showinfo("Sucesso", f"Extraído em: {caminho_destino}")
     except Exception as e:
         print("Erro", f"Erro ao descompactar: {e}")
 
 ### UTILITÁRIOS E VERIFICAÇÕES
 
-def verifica_existe(self, caminho):
+def verifica_existe(caminho):
     
-    #verifica se um arquivo ou pasta existe.
+    '''
+    Verifica se um arquivo ou pasta existe.
+    
+    Args:
+        caminho (str): O caminho do arquivo ou pasta que deseja verificar.
+
+    Returns:
+        bool: True se o arquivo ou pasta existir, False caso contrário.
+    '''
     return os.path.exists(caminho)
 
-def obter_arquivo_mais_recente(self, diretorio, extensao=None):
+def obter_arquivo_mais_recente(diretorio: str, extensao=None):
 
-    #útil para pegar o último arquivo baixado na pasta de Downloads.
+    '''
+    Útil para pegar o último arquivo baixado na pasta de Downloads.
+    
+    Args:
+        diretorio (str): O caminho do diretório onde deseja buscar o arquivo.
+        extensao (str, opcional): Se fornecido, filtra os arquivos por extensão (ex: '.pdf').
+
+    Returns:
+        str: O caminho completo do arquivo mais recente encontrado no diretório (filtrado por extensão se especificado).
+    '''
     try:
-        arquivos = self.listar_arquivos(diretorio, extensao)
+        arquivos = listar_arquivos(diretorio, extensao)
         if not arquivos:
             return None
         
