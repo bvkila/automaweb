@@ -4,13 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "automaweb"
-version = "0.1.6"
-description = "Biblioteca para automatização web com Selenium e Edge"
+version = "0.1.8"
+description = "Biblioteca para automatização web (Chrome, Edge, Firefox) e manipulação de arquivos no SO."
 readme = "README.md"
+requires-python = ">=3.8"
 authors = [{ name = "João Braga"}]
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -20,3 +26,4 @@ dependencies = [
 
 [project.urls]
 "Homepage" = "https://github.com/bvkila/automaweb"
+"Bug Tracker" = "https://github.com/bvkila/automaweb/issues
