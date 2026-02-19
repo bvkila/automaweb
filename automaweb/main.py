@@ -5,6 +5,9 @@ bem como interações com o gerenciamento de arquivos no computador
 
 #bibliotecas do Selenium para controle do navegador e interações com a página
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import ElementNotInteractableException
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.support import expected_conditions as EC
@@ -70,7 +73,33 @@ class Navegador:
         #o decorador devolve o wrapper para substituir a função original
         return wrapper
  
+    @staticmethod
+    def _repetir_por_interceptacao(limite=3, delay=1):
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                tentativas = 0
+                #lista de exceções de "impedimento"
+                excecoes_ignordas = (
+                    ElementClickInterceptedException, 
+                    ElementNotInteractableException,
+                    StaleElementReferenceException
+                ) #sempre que uma dessas exceções ocorrer, ele tenta novamente
+                
+                while tentativas < limite:
+                    try:
+                        return func(*args, **kwargs)
+                    except excecoes_ignordas as e:
+                        tentativas += 1
+                        if tentativas == limite:
+                            raise e
+                        time.sleep(delay)
+                return None
+            return wrapper
+        return decorator
+
 ### NAVEGAÇÕES DENTRO DO DRIVER
+
 
     def abrir_driver(self, headless: bool = False):
         '''
@@ -219,6 +248,7 @@ class Navegador:
 
 ### INTERAÇÕES COM A PÁGINA
 
+    @_repetir_por_interceptacao()
     def clicar(self, xpath: str):
     
         '''
@@ -229,12 +259,13 @@ class Navegador:
         '''
         self._aplicar_stun()
         try:
-            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             elemento.click()
         except Exception as e:
             print(f"Erro ao clicar no elemento: {e}")
             raise
 
+    @_repetir_por_interceptacao()
     def digitar(self, xpath: str, texto: str):
         
         '''
@@ -246,12 +277,13 @@ class Navegador:
         '''
         self._aplicar_stun()
         try:
-            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             elemento.send_keys(texto)
         except Exception as e:
             print(f"Erro ao digitar no elemento: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def limpar(self, xpath: str):
 
         '''
@@ -262,12 +294,13 @@ class Navegador:
         '''
         self._aplicar_stun()
         try:
-            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             elemento.clear()
         except Exception as e:
             print(f"Erro ao limpar o elemento: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def passar_mouse(self, xpath: str):
         
         '''
@@ -278,13 +311,14 @@ class Navegador:
         '''
         self._aplicar_stun()
         try:
-            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             actions = ActionChains(self.driver)
             actions.move_to_element(elemento).perform()
         except Exception as e:
             print(f"Erro ao passar o mouse sobre o elemento: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def selecionar_texto(self, xpath: str, texto: str):
 
         '''
@@ -297,11 +331,13 @@ class Navegador:
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+
             Select(elemento).select_by_visible_text(texto)
         except Exception as e:
             print(f"Erro ao selecionar o texto {texto}: {e}")
             raise
 
+    @_repetir_por_interceptacao()
     def selecionar_valor(self, xpath: str, valor: int):
 
         '''
@@ -319,6 +355,7 @@ class Navegador:
             print(f"Erro ao selecionar o valor {valor}: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def obter_texto(self, xpath: str):
 
         '''
@@ -337,6 +374,7 @@ class Navegador:
             print(f"Erro ao obter o texto do elemento: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def obter_atributo(self, xpath: str, atributo: str):
 
         '''
@@ -356,6 +394,7 @@ class Navegador:
             print(f"Erro ao obter o atributo do elemento: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def rolar_ate_elemento(self, xpath: str):
         
         '''
@@ -371,6 +410,7 @@ class Navegador:
             print(f"Erro ao rolar a tela até o elemento: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def aguardar_elemento_sumir(self, xpath: str):
         
         '''
@@ -385,6 +425,7 @@ class Navegador:
             print(f"Erro ao aguardar o elemento sumir: {e}")
             raise
     
+    @_repetir_por_interceptacao()
     def encontrar_elementos(self, xpath: str):
         
         '''
@@ -538,7 +579,7 @@ class Navegador:
         except Exception as e:
             print(f"Erro ao verificar se o elemento está selecionado: {e}")
             raise
-    
+
     def verifica_habilitado(self, xpath: str):
         '''
         Verifica se um elemento está habilitado (Retorna True ou False).
@@ -570,10 +611,10 @@ class Navegador:
         try:
             WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable((By.XPATH, xpath)))
             return True
-        except Exception:
-            print(f"Erro ao verificar se o elemento é clicavel")
+        except Exception as e:
+            print(f"Elemento não é clicável após {timeout} segundos: {xpath}.\n Erro: {e}")
             return False
-    
+
     def verifica_existe(self, xpath: str, timeout: float):
         '''
         Verifica se um elemento existe na página (Retorna True ou False).
@@ -588,7 +629,8 @@ class Navegador:
         try:
             WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
             return True
-        except Exception:
+        except Exception as e:
+            print(f"Elemento não existe após {timeout} segundos: {xpath}.\n Erro: {e}")
             return False
     
     def verificar_texto_digitado(self, xpath: str, texto_esperado: str ):
@@ -609,6 +651,24 @@ class Navegador:
             print(f"Erro ao verificar o texto digitado: {e}")
             raise
     
+    def verificar_texto_selecionado(self, xpath: str, texto_esperado: str):
+        '''
+        Verifica se o texto atualmente selecionado em um select é igual ao texto esperado.
+        
+        Args:
+            xpath (str): O XPath do elemento (select) que deseja verificar.
+            texto_esperado (str): O texto esperado.
+        
+        Returns:
+            bool: True se o texto atualmente selecionado for igual ao texto esperado, False caso contrário.
+        '''
+        try:
+            texto_atual = self.obter_texto_selecionado(xpath)
+            return texto_atual == texto_esperado
+        except Exception as e:
+            print(f"Erro ao verificar o select: {e}")
+            raise
+    
     def obter_texto_selecionado(self, xpath: str):
         '''
         Obtém o texto atualmente selecionado em um elemento select.
@@ -626,24 +686,6 @@ class Navegador:
             return opcao_selecionada.text
         except Exception as e:
             print(f"Erro ao obter o texto do select: {e}")
-            raise
-    
-    def verificar_selecao(self, xpath: str, texto_esperado: str):
-        '''
-        Verifica se o texto atualmente selecionado em um select é igual ao texto esperado.
-        
-        Args:
-            xpath (str): O XPath do elemento (select) que deseja verificar.
-            texto_esperado (str): O texto esperado.
-        
-        Returns:
-            bool: True se o texto atualmente selecionado for igual ao texto esperado, False caso contrário.
-        '''
-        try:
-            texto_atual = self.obter_texto_selecionado(xpath)
-            return texto_atual == texto_esperado
-        except Exception as e:
-            print(f"Erro ao verificar o select: {e}")
             raise
 
 ### MANIPULAÇÃO DE ARQUIVOS
