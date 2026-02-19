@@ -31,7 +31,13 @@ import json
 import os
 
 class Navegador:
-
+    '''
+    Classe principal para controle do navegador e interações com a página.
+    
+    Args:
+        tempo_stun (float): Tempo de espera entre as ações (em segundos). Padrão é 0.
+        navegador (str): O tipo do navegador a ser controlado ("edge", "chrome" ou "firefox"). Padrão é "edge".
+    '''
     def __init__(self, tempo_stun: float = 0, navegador: Literal["edge", "chrome", "firefox" ] = "edge"):
         
         self.driver = None #driver do navegador
@@ -256,7 +262,7 @@ class Navegador:
         '''
         self._aplicar_stun()
         try:
-            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             elemento.clear()
         except Exception as e:
             print(f"Erro ao limpar o elemento: {e}")
@@ -290,7 +296,7 @@ class Navegador:
         '''
         self._aplicar_stun()
         try:
-            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             Select(elemento).select_by_visible_text(texto)
         except Exception as e:
             print(f"Erro ao selecionar o texto {texto}: {e}")
@@ -307,7 +313,7 @@ class Navegador:
         '''
         self._aplicar_stun()
         try:
-            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             Select(elemento).select_by_value(valor)
         except Exception as e:
             print(f"Erro ao selecionar o valor {valor}: {e}")
@@ -527,7 +533,7 @@ class Navegador:
             bool: True se o elemento estiver selecionado, False caso contrário.
         '''
         try:
-            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             return elemento.is_selected()
         except Exception as e:
             print(f"Erro ao verificar se o elemento está selecionado: {e}")
@@ -562,7 +568,7 @@ class Navegador:
             bool: True se o elemento é clicavel, False caso contrário.
         '''
         try:
-            WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
+            WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable((By.XPATH, xpath)))
             return True
         except Exception:
             print(f"Erro ao verificar se o elemento é clicavel")
