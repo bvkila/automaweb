@@ -1,161 +1,171 @@
-# 🤖 Biblioteca de Automação Web e Gerenciamento de Arquivos
+# AutomaWeb 🕸️📁
 
-Uma biblioteca Python robusta e simplificada para automatizar interações na web usando Selenium (focada no Microsoft Edge) e gerenciar arquivos/pastas no sistema operacional.
+**AutomaWeb** é uma biblioteca Python poderosa e simplificada para automação de tarefas na web e gerenciamento de arquivos no sistema operacional. Construída sobre o Selenium e bibliotecas nativas do Python, ela remove a complexidade do código boilerplate, permitindo que você crie robôs e scripts de automação de forma rápida, legível e eficiente.
 
-Ideal para criar robôs de extração de dados (Web Scraping), automação de rotinas de escritório, testes automatizados e organização de diretórios.
+## 🚀 Instalação
 
----
-
-## 📦 Requisitos e Instalação
-
-Para utilizar esta biblioteca, você precisará do Python instalado e de algumas dependências externas. Grande parte das bibliotecas utilizadas (`os`, `shutil`, `time`, `json`, `tkinter`, `functools`, `datetime`) já são nativas do Python.
-
-Você só precisa instalar o Selenium:
+Você pode instalar o AutomaWeb facilmente através do gerenciador de pacotes pip:
 
 ```bash
-pip install selenium
+pip install automaweb
 
 ```
 
-> **Nota:** Esta biblioteca está configurada por padrão para usar o **Microsoft Edge**. Certifique-se de ter o navegador Edge atualizado na sua máquina.
+*Nota: Certifique-se de ter os navegadores (Chrome, Edge ou Firefox) instalados em sua máquina. O Selenium Manager moderno (incluído no Selenium 4+) lidará com o download automático dos drivers (como o ChromeDriver) para você.*
 
 ---
 
-## 🚀 Como Usar (Quick Start)
-
-Aqui está um exemplo básico de como iniciar o navegador, fazer uma pesquisa, tirar um print e manipular um arquivo recém-baixado:
-
-```python
-from sua_biblioteca import Navegador, obter_arquivo_mais_recente, criar_pasta, mover_arquivo
-
-# 1. Inicializa o Navegador com um 'stun' (pausa) de 1 segundo entre ações
-bot = Navegador(tempo_stun=1.0)
-bot.abrir_driver(headless=False) # Mude para True se quiser rodar em segundo plano
-
-# 2. Navega e Interage
-bot.abrir_url("https://google.com")
-bot.digitar('//textarea[@title="Pesquisar"]', "Gatos fofos")
-bot.clicar('(//input[@value="Pesquisa Google"])[2]')
-bot.tirar_screenshot("gatos_pesquisa")
-
-# 3. Gerencia Arquivos
-pasta_destino = "C:/MeusTestes/Gatos"
-criar_pasta(pasta_destino)
-
-arquivo_baixado = obter_arquivo_mais_recente("C:/Users/SeuUsuario/Downloads", ".png")
-if arquivo_baixado:
-    mover_arquivo(arquivo_baixado, f"{pasta_destino}/print_gatos.png")
-
-# 4. Encerra
-bot.fechar_driver()
-
-```
-
----
-
-## 🧰 Estrutura de Funcionalidades
+## 💡 Visão Geral e Recursos
 
 A biblioteca é dividida em duas frentes principais:
 
-### 1. Classe `Navegador` (Automação Web)
-
-Gerencia toda a sessão do navegador com proteções embutidas e esperas implícitas (WebDriverWait).
-
-* **Controle de Sessão:** `abrir_driver()`, `fechar_driver()`, `salvar_cookies()`, `carregar_cookies()`.
-* **Navegação:** `abrir_url()`, `abrir_nova_aba()`, `alternar_aba()`, `fechar_aba()`, `recarregar_driver()`.
-* **Interação em Tela:** `clicar()`, `digitar()`, `limpar()`, `passar_mouse()`, `rolar_ate_elemento()`, `selecionar_texto()`, `selecionar_valor()`.
-* **Extração e Verificação:** `obter_texto()`, `obter_atributo()`, `verifica_existe()`, `verifica_clicavel()`, `verifica_selecionado()`.
-* **Avançado:** `entrar_iframe()`, `sair_iframe()`, `tirar_screenshot()`.
-
-### 2. Funções Soltas (Manipulação de Arquivos e SO)
-
-Interface amigável para comandos do sistema operacional e janelas de seleção gráfica (via `tkinter`).
-
-* **Janelas de Seleção (Pop-ups):** `selecionar_arquivo()`, `selecionar_multiplos_arquivos()`, `selecionar_pasta()`.
-* **Operações de Arquivo:** `renomear_arquivo()`, `mover_arquivo()`, `copiar_arquivo()`, `excluir_arquivo()`, `aguardar_arquivo()`.
-* **Operações de Pasta:** `criar_pasta()`, `listar_arquivos()`, `listar_recursivo()`, `excluir_pasta_completa()`, `pasta_esta_vazia()`.
-* **Compactação:** `compactar_para_zip()`, `descompactar_zip()`.
+1. **Automação Web (`Navegador`)**: Controle simplificado de navegadores (Chrome, Edge, Firefox), com métodos prontos para clicar, digitar, esperar elementos, gerenciar abas, lidar com iframes e até salvar/carregar cookies. Ele já inclui verificações embutidas e tratamento de "stuns" (tempos de espera entre ações).
+2. **Gerenciamento de Arquivos e Pastas**: Funções utilitárias diretas para criar pastas, mover, copiar, renomear, excluir, compactar/descompactar (ZIP), buscar arquivos mais recentes e interagir com o usuário via interface gráfica (Tkinter) para seleção de caminhos.
 
 ---
 
-## 🎯 Guia Definitivo de XPath para Automação
+## 🛠️ Exemplos de Uso
 
-Praticamente todas as funções de interação da classe `Navegador` exigem uma string `xpath`. O XPath (XML Path Language) é a linguagem usada para navegar em elementos e atributos de um documento XML ou HTML.
+### 1. Automação Web Básica
 
-Dominar o XPath é o que diferencia um script frágil de uma automação à prova de falhas.
+```python
+from automaweb import Navegador
 
-### O que NUNCA fazer
+# Inicializa o navegador Chrome com um tempo de espera (stun) de 1 segundo entre ações
+nav = Navegador(tempo_stun=1, navegador="chrome")
 
-Evite usar **XPath Absoluto** (ex: `/html/body/div[2]/div[1]/form/input`). Se o desenvolvedor do site adicionar um simples `<br>` ou `<div>` novo na página, seu caminho quebra e o robô falha.
+# Abre o navegador (pode usar headless=True para rodar em segundo plano)
+nav.abrir_driver(headless=False)
 
-### O que fazer: XPath Relativo
+try:
+    # Acessa um site
+    nav.abrir_url("https://www.google.com")
+    
+    # Digita uma pesquisa e clica no botão (XPaths fictícios para exemplo)
+    nav.digitar("//textarea[@title='Pesquisar']", "Automação com Python")
+    nav.clicar("//input[@value='Pesquisa Google']")
+    
+    # Tira um print da tela
+    nav.tirar_screenshot("resultado_pesquisa")
 
-Sempre use o XPath relativo, que busca o elemento com base em suas características únicas, independentemente de onde ele esteja na página. Ele sempre começa com `//`.
+finally:
+    # Garante que o navegador será fechado
+    nav.fechar_driver()
 
-#### 1. Sintaxe Básica
+```
 
-A fórmula de ouro é: `//tag_do_elemento[@atributo="valor"]`
+### 2. Manipulação de Arquivos e Pastas
 
-* **Busca por ID:** O ID deve ser único na página. É o método mais seguro.
-* `//input[@id="username"]`
+```python
+import os
+from automaweb import criar_pasta, mover_arquivo, obter_arquivo_mais_recente
 
+caminho_downloads = f"{os.getlogin()}/Downloads"
+pasta_destino = f"{caminho_downloads}/Relatorios_Processados"
 
-* **Busca por Classe:**
-* `//button[@class="btn-primary login"]`
+# Cria a pasta se ela não existir
+criar_pasta(pasta_destino)
 
+# Pega o último PDF baixado na pasta de downloads
+ultimo_pdf = obter_arquivo_mais_recente(caminho_downloads, extensao=".pdf")
 
-* **Busca por Name:**
-* `//input[@name="password"]`
+if ultimo_pdf:
+    # Move o arquivo para a nova pasta
+    mover_arquivo(ultimo_pdf, f"{pasta_destino}/relatorio_final.pdf")
+    print("Arquivo processado com sucesso!")
 
-
-
-#### 2. Buscas com Texto
-
-Às vezes, o botão não tem ID ou classe útil, mas tem um texto claro.
-
-* **Texto Exato:** Busca um botão que o texto seja exatamente "Enviar".
-* `//button[text()="Enviar"]`
-
-
-* **Contém Texto (Contains):** Excelente para textos dinâmicos ou com espaços sobrando.
-* `//button[contains(text(), "Enviar")]`
-
-
-* **Contém em Atributo:**
-* `//input[contains(@class, "btn-submit")]` (Pega o botão mesmo que a classe completa seja "btn-submit active hover").
-
-
-
-#### 3. Combinando Condições (AND / OR)
-
-Se um atributo só não for suficiente para isolar o elemento:
-
-* `//input[@type="text" and @name="email"]`
-* `//button[text()="Confirmar" or @id="btn-confirm"]`
-
-#### 4. Navegando na Árvore (Eixos XPath)
-
-Às vezes, o elemento que você quer interagir não tem nada de único, mas o elemento "pai" (acima) ou "filho" (abaixo) dele tem.
-
-* **Indo para o Filho (Descendant):** Busca um `<a>` dentro de uma div específica.
-* `//div[@id="menu-principal"]//a[text()="Contato"]`
-
-
-* **Indo para o Pai (Parent):** Você acha o elemento filho e volta para o pai.
-* `//span[text()="Nome de Usuário"]/parent::div`
-
-
-* **Indo para o Irmão (Following-Sibling):** Muito útil em formulários onde o rótulo (label) tem o texto, e o input está logo ao lado.
-* `//label[text()="CPF:"]/following-sibling::input`
-
-
-
-### 💡 Dicas de Ouro para usar com esta biblioteca
-
-1. **Inspecione sempre:** No navegador, aperte `F12` (Ferramentas de Desenvolvedor), clique na setinha de inspeção e clique no elemento. Na aba *Elements*, aperte `Ctrl + F` e teste seu XPath ali mesmo antes de colocar no código. O navegador vai destacar o elemento em amarelo se o XPath estiver correto.
-2. **Use o `tempo_stun` com inteligência:** Sites pesados demoram a renderizar cliques. Se você toma blocos ou erros de intercepção, aumente o `tempo_stun` na inicialização da classe `Navegador(tempo_stun=1.5)` ou confie nas funções de `aguardar_elemento_sumir()`.
-3. **Iframes são ilhas:** Se o XPath está certinho no F12 mas a biblioteca diz que o elemento não existe, **ele provavelmente está dentro de um Iframe**. Inspecione o elemento, suba a árvore HTML e procure por uma tag `<iframe>`. Se houver, use a função `entrar_iframe('xpath_do_iframe')` antes de tentar interagir com o elemento lá de dentro. Não esqueça de dar um `sair_iframe()` depois!
+```
 
 ---
 
-Gostaria de ajuda para criar um script prático usando essa biblioteca recém-documentada, ou quer que eu crie um `requirements.txt` estruturado para acompanhar este README?
+## 🎯 Guia Definitivo: Dominando o XPath
+
+O **XPath** (XML Path Language) é a espinha dorsal da automação web com o AutomaWeb. Ele funciona como um "endereço" ou "caminho" para encontrar qualquer elemento dentro da estrutura HTML de uma página.
+
+### Como encontrar o XPath de um elemento?
+
+1. Abra o navegador e acesse a página desejada.
+2. Clique com o botão direito no elemento (botão, campo de texto) e selecione **Inspecionar**.
+3. O painel de Ferramentas do Desenvolvedor (DevTools) será aberto, destacando o código HTML do elemento.
+4. Pressione `Ctrl + F` (ou `Cmd + F`) no DevTools para abrir a barra de busca e testar seus XPaths em tempo real.
+
+### Regra de Ouro: Fuja do XPath Absoluto!
+
+❌ **Absoluto:** `/html/body/div[1]/div/div[2]/form/input`
+Isso quebra se o dono do site adicionar um único elemento novo na página.
+
+✅ **Relativo:** `//input[@id='email']`
+Isso busca o elemento em qualquer lugar da página que atenda aos critérios, sendo muito mais resistente a mudanças.
+
+### Sintaxe Básica do XPath Relativo
+
+A estrutura padrão é: `//tag[@atributo='valor']`
+
+* **`//`**: Busca em qualquer lugar do documento.
+* **`tag`**: O tipo de elemento (`input`, `button`, `div`, `a`, `*` para qualquer tag).
+* **`@atributo`**: O nome do atributo HTML (`id`, `class`, `name`, `type`).
+* **`'valor'`**: O valor exato do atributo.
+
+**Exemplos:**
+
+* `//input[@id='usuario']` (Encontra um input com o id "usuario")
+* `//button[@type='submit']` (Encontra um botão de envio)
+* `//*[@name='senha']` (Encontra *qualquer* elemento com o name "senha")
+
+### Usos Avançados e Dicas Profissionais
+
+O poder real do XPath está nas suas funções dinâmicas. Aqui estão as técnicas essenciais para automações robustas:
+
+#### 1. Selecionando pelo Texto (`text()`)
+
+Muitas vezes, botões ou links não têm IDs ou classes claras, mas têm um texto visível.
+
+* **Sintaxe:** `//tag[text()='Texto Exato']`
+* **Exemplo:** `//button[text()='Fazer Login']`
+* **Uso no AutomaWeb:** `nav.clicar("//button[text()='Fazer Login']")`
+
+#### 2. Busca por Texto Parcial (`contains()`)
+
+Ideal para quando uma classe tem vários nomes (ex: `class="btn btn-primary active"`) ou o texto muda ligeiramente (ex: "Bem-vindo, João").
+
+* **Sintaxe:** `//tag[contains(@atributo, 'parte_do_valor')]`
+* **Sintaxe (Texto):** `//tag[contains(text(), 'parte_do_texto')]`
+* **Exemplos:**
+* `//div[contains(@class, 'btn-primary')]` (Pega o botão mesmo que tenha outras classes)
+* `//a[contains(text(), 'Esqueci minha')]` (Clica no link "Esqueci minha senha")
+
+#### 3. Múltiplas Condições (`and` / `or`)
+
+Quando um único atributo não é suficiente para identificar um elemento unicamente.
+
+* **Sintaxe:** `//tag[@attr1='val1' and @attr2='val2']`
+* **Exemplo:** `//input[@type='text' and @placeholder='Digite seu CPF']`
+
+#### 4. Navegando pela Árvore (Eixos XPath)
+
+Às vezes, o elemento que você quer clicar não tem identificadores, mas o "pai" ou "irmão" dele tem.
+
+* **Subindo para o elemento Pai (`/..` ou `parent::`)**
+Você encontra um texto, mas quer clicar na caixa inteira que o envolve.
+* `//span[text()='Opção 1']/..`
+
+
+* **Buscando o próximo elemento (Irmão - `following-sibling::`)**
+Você encontra a label "Nome:", e quer o campo de input que vem logo em seguida.
+* `//label[text()='Nome:']/following-sibling::input`
+
+#### Resumo de Estratégia XPath para Automações
+
+Sempre tente usar identificadores na seguinte ordem de prioridade para evitar que seu robô quebre facilmente:
+
+1. `@id` (Único e imutável na maioria das vezes).
+2. `@name` (Geralmente único em formulários).
+3. `text()` (Se o botão tiver um texto fixo).
+4. `contains(@class, '...')` (Classes específicas).
+5. Navegação a partir de um pai/irmão estável.
+
+---
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Se você tiver ideias para melhorar a biblioteca, adicionar novos recursos ao `Navegador` ou expandir os utilitários de sistema, sinta-se à vontade para abrir uma *Issue* ou enviar um *Pull Request* no repositório oficial.
