@@ -39,7 +39,7 @@ class Navegador:
     
     Args:
         tempo_stun (float): Tempo de espera entre as ações (em segundos). Padrão é 0.
-        navegador (str): O tipo do navegador a ser controlado ("edge", "chrome" ou "firefox"). Padrão é "edge".
+        navegador (str): Tipo do navegador (edge, chrome ou firefox). Padrão é "edge".
     '''
     def __init__(self, tempo_stun: float = 0, navegador: Literal["edge", "chrome", "firefox" ] = "edge"):
         
@@ -100,18 +100,21 @@ class Navegador:
 
 ### NAVEGAÇÕES DENTRO DO DRIVER
 
-
-    def abrir_driver(self, headless: bool = False):
+    def abrir_driver(self, headless: bool = False, tempo_wait: int = 10):
         '''
         Inicializa o driver baseado na escolha feita no __init__ (Edge, Chrome ou Firefox).
 
         Args:
             headless (bool): Se True, o navegador será iniciado em modo headless. Padrão é False.
+            tempo_wait (int): Tempo de espera do driver (em segundos). Padrão é 10.
         '''
         try:
-            if self.navegador == "chrome":
+            if self.navegador == "chrome" or self.navegador == "edge":
                 
-                options = ChromeOptions()
+                if self.navegador == "chrome":
+                    options = ChromeOptions()
+                if self.navegador == "edge":
+                    options = EdgeOptions()
                 #configurações anti-detecção e log
                 options.add_experimental_option("excludeSwitches", ["enable-automation"])
                 options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -123,7 +126,10 @@ class Navegador:
                     options.add_argument("--headless=new")
                     options.add_argument("--no-sandbox") #necessário para Linux
                     options.add_argument("--disable-dev-shm-usage") #evita erros de memória no Docker/Linux
-                self.driver = webdriver.Chrome(options=options)
+                if self.navegador == "chrome":
+                    self.driver = webdriver.Chrome(options=options)
+                if self.navegador == "edge":
+                    self.driver = webdriver.Edge(options=options)
 
             elif self.navegador == "firefox":
                 
@@ -135,29 +141,13 @@ class Navegador:
                 if headless:
                     options.add_argument("-headless")
                 self.driver = webdriver.Firefox(options=options)
-
-            elif self.navegador == "edge":
-                
-                options = EdgeOptions()
-                #configurações anti-detecção e log
-                options.add_experimental_option("excludeSwitches", ["enable-automation"])
-                options.add_experimental_option('excludeSwitches', ['enable-logging'])
-                options.add_experimental_option('useAutomationExtension', False)
-                options.add_argument("--log-level=3")
-                options.add_argument("--start-maximized")
-                if headless:
-                    options.add_argument("--headless=new")
-                    options.add_argument("--headless=new")
-                    options.add_argument("--no-sandbox") #necessário para Linux
-                    options.add_argument("--disable-dev-shm-usage") #evita erros de memória no Docker/Linux
-                self.driver = webdriver.Edge(options=options)
             
             else:
                 raise ValueError(f"Navegador '{self.navegador}' não suportado. Escolha entre: edge, chrome, firefox.")
 
             #configurações globais após iniciar o driver
             self.driver.maximize_window()
-            self.wait = WebDriverWait(self.driver, 10)
+            self.wait = WebDriverWait(self.driver, tempo_wait)
 
         except Exception as e:
             print(f"Erro ao iniciar o driver ({self.navegador}): {e}")
