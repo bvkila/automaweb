@@ -5,3 +5,4 @@ automaweb.egg-info/SOURCES.txt
 automaweb.egg-info/top_level.txt
 *.whl
 *.gz
+/env/*
