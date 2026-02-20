@@ -120,6 +120,9 @@ class Navegador:
                 options.add_argument("--start-maximized")
                 if headless:
                     options.add_argument("--headless=new")
+                    options.add_argument("--headless=new")
+                    options.add_argument("--no-sandbox") #necessário para Linux
+                    options.add_argument("--disable-dev-shm-usage") #evita erros de memória no Docker/Linux
                 self.driver = webdriver.Chrome(options=options)
 
             elif self.navegador == "firefox":
@@ -144,6 +147,9 @@ class Navegador:
                 options.add_argument("--start-maximized")
                 if headless:
                     options.add_argument("--headless=new")
+                    options.add_argument("--headless=new")
+                    options.add_argument("--no-sandbox") #necessário para Linux
+                    options.add_argument("--disable-dev-shm-usage") #evita erros de memória no Docker/Linux
                 self.driver = webdriver.Edge(options=options)
             
             else:
@@ -453,7 +459,7 @@ class Navegador:
         '''
 
         try:
-            self.driver.save_screenshot(f"{os.getlogin()}/Downloads/{nome_arquivo}.png")
+            self.driver.save_screenshot(os.path.join(os.path.expanduser("~"), "Downloads", f"{nome_arquivo}.png"))
         except Exception as e:
             print(f"Erro ao tirar screenshot: {e}")
             raise
@@ -486,7 +492,7 @@ class Navegador:
             print(f"Erro ao sair do iframe: {e}")
             raise
     
-    def salvar_cookies(self, nome_arquivo: str = f"{os.getlogin()}/Downloads/cookies.json"):
+    def salvar_cookies(self, nome_arquivo: str = os.path.join(os.path.expanduser("~"), "Downloads", "cookies.json")):
         
         '''
         Coleta todos os cookies da sessão atual e salva em um arquivo JSON.
@@ -517,7 +523,7 @@ class Navegador:
             print(f"Erro ao salvar cookies: {e}")
             raise
     
-    def carregar_cookies(self, nome_arquivo: str = f"{os.getlogin()}/Downloads/cookies.json"):
+    def carregar_cookies(self, nome_arquivo: str = os.path.join(os.path.expanduser("~"), "Downloads", "cookies.json")):
 
         '''
         Carrega os cookies salvos em um arquivo JSON.
