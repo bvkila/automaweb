@@ -17,6 +17,9 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 
+#biblioteca para o driver undetected
+import undetected_chromedriver as uc
+
 #biblioteca para criar decoradores e 
 from functools import wraps
 from typing import Literal
@@ -151,6 +154,35 @@ class Navegador:
 
         except Exception as e:
             print(f"Erro ao iniciar o driver ({self.navegador}): {e}")
+            raise
+
+    def abrir_driver_undetected(self, headless: bool = False, tempo_wait: int = 10):
+        try:
+            if self.navegador == "chrome":
+                options = uc.ChromeOptions()
+                
+                #configurações para o Chrome (Undetected)
+                if headless:
+                    options.add_argument('--headless')
+                
+                options.add_argument("--start-maximized")
+                options.add_argument("--disable-extensions")
+                options.add_argument("--disable-popup-blocking")
+
+                self.driver = uc.Chrome(options=options)
+
+            elif self.navegador == "firefox":
+                #verificar código do Bento que usa Firefox
+                pass
+
+            else:
+                messagebox.showwarning("Aviso", f"O navegador {self.navegador} ainda não tem suporte para o modo undetected.\nAbrindo o modo padrão...")
+                self.abrir_driver()
+
+            self.wait = WebDriverWait(self.driver, tempo_wait)
+
+        except Exception as e:
+            print(f"Erro ao iniciar o driver: {e}")
             raise
 
     @_verifica_driver
