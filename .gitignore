@@ -6,3 +6,4 @@ automaweb.egg-info/top_level.txt
 *.whl
 *.gz
 /env/*
+automaweb/testes/credenciais_teste.py
