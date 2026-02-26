@@ -38,9 +38,21 @@ class MeuBot:
                 # Inicializamos o Undetected Chromedriver
                 self.driver = uc.Chrome(options=options)
 
-            elif self.navegador == "firefox":
-                #verificar código do Bento que usa Firefox
-                pass
+            elif self.navegador == "edge":
+                
+                options = EdgeOptions()
+                
+                options.binary_location = "/usr/bin/microsoft-edge-stable"
+                options.add_argument("--start-maximized")
+                options.add_argument("--disable-extensions")
+                options.add_argument("--disable-popup-blocking")
+
+                self.driver = uc.Chrome(
+                    options=options,
+                    browser_executable_path= "/usr/bin/microsoft-edge-stable"
+                )
+
+                self.wait = WebDriverWait(self.driver, tempo_wait)
 
             else:
                 messagebox.showwarning("Aviso", f"O navegador {self.navegador} ainda não tem suporte para o modo undetected.\nAbrindo o modo padrão...")
@@ -97,3 +109,7 @@ class MeuBot:
         except Exception as e:
             print(f"Erro ao salvar cookies: {e}")
             raise
+
+nav = MeuBot(navegador="edge")
+nav.abrir_driver_undetected()
+nav.abrir_url('https://google.com')

@@ -171,9 +171,18 @@ class Navegador:
 
                 self.driver = uc.Chrome(options=options)
 
-            elif self.navegador == "firefox":
-                #verificar código do Bento que usa Firefox
-                pass
+            elif self.navegador == "edge":
+                
+                options = EdgeOptions()
+                options.add_argument("--start-maximized")
+                options.add_argument("--disable-extensions")
+                options.add_argument("--disable-popup-blocking")
+
+                self.driver = uc.Chrome(
+                    options=options
+                )
+
+                self.wait = WebDriverWait(self.driver, tempo_wait)
 
             else:
                 messagebox.showwarning("Aviso", f"O navegador {self.navegador} ainda não tem suporte para o modo undetected.\nAbrindo o modo padrão...")
