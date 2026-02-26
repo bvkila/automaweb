@@ -19,6 +19,9 @@ from selenium import webdriver
 
 #biblioteca para o driver undetected
 import undetected_chromedriver as uc
+from DrissionPage import ChromiumPage
+from DrissionPage import ChromiumOptions
+import platform
 
 #biblioteca para criar decoradores e 
 from functools import wraps
@@ -50,6 +53,7 @@ class Navegador:
         self.wait = None #espera do driver
         self.stun = tempo_stun #tempo de stun entre as ações (em segundos)
         self.navegador = navegador.lower() #tipo do navegador (edge, chrome ou firefox)
+        self.undetected_edge = False #indica se o modo undetected do edge foi ativado (inicialmente False)
 
     def _aplicar_stun(self):
 
@@ -156,7 +160,7 @@ class Navegador:
             print(f"Erro ao iniciar o driver ({self.navegador}): {e}")
             raise
 
-    def abrir_driver_undetected(self, headless: bool = False, tempo_wait: int = 10):
+    def abrir_driver_undetected(self, headless: bool = False, tempo_wait: int = 10, caminho_edge_linux: str = '/usr/bin/microsoft-edge'):
         try:
             if self.navegador == "chrome":
                 options = uc.ChromeOptions()
@@ -164,31 +168,36 @@ class Navegador:
                 #configurações para o Chrome (Undetected)
                 if headless:
                     options.add_argument('--headless')
-                
+                    options.add_argument("--disable-popup-blocking")
                 options.add_argument("--start-maximized")
                 options.add_argument("--disable-extensions")
-                options.add_argument("--disable-popup-blocking")
-
+                
                 self.driver = uc.Chrome(options=options)
-
+            
             elif self.navegador == "edge":
+                options = ChromiumOptions()
                 
-                options = EdgeOptions()
-                options.add_argument("--start-maximized")
-                options.add_argument("--disable-extensions")
-                options.add_argument("--disable-popup-blocking")
-
-                self.driver = uc.Chrome(
-                    options=options
-                )
-
+                sistema = platform.system()
+                if sistema == "Windows":
+                    options.set_browser_path(r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe')
+                elif sistema == "Linux":
+                    options.set_browser_path(caminho_edge_linux)
+                
+                # Semelhante ao start-maximized
+                if headless:
+                    options.headless()
+                    options.set_argument("--disable-popup-blocking")
+                options.set_argument('--start-maximized')
+                options.set_argument('--no-first-run')
+                self.driver = ChromiumPage(options)
+                self.driver.get_cookies = lambda: self.driver.cookies()
+            
+            if self.navegador in ["chrome", "edge"]:
                 self.wait = WebDriverWait(self.driver, tempo_wait)
 
             else:
                 messagebox.showwarning("Aviso", f"O navegador {self.navegador} ainda não tem suporte para o modo undetected.\nAbrindo o modo padrão...")
                 self.abrir_driver()
-
-            self.wait = WebDriverWait(self.driver, tempo_wait)
 
         except Exception as e:
             print(f"Erro ao iniciar o driver: {e}")
