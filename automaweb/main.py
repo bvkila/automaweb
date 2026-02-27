@@ -886,9 +886,8 @@ def criar_pasta(caminho_pasta: str):
     Args:
         caminho_pasta (str): O caminho completo da pasta que deseja criar.
     '''
-    #exist_ok=True evita erro se a pasta já existir.'''
     try:
-        os.makedirs(caminho_pasta, exist_ok=True)
+        os.makedirs(caminho_pasta, exist_ok=True) #exist_ok=True evita erro se a pasta já existir
         print(f"Pasta garantida: {caminho_pasta}")
     except Exception as e:
         print(f"Erro ao criar pasta: {e}")
@@ -906,12 +905,49 @@ def listar_arquivos(diretorio: str, extensao=None):
         list: Uma lista com os nomes dos arquivos encontrados no diretório (filtrados por extensão se especificado).
     '''
     try:
-        arquivos = os.listdir(diretorio)
-        if extensao:
-            arquivos = [f for f in arquivos if f.endswith(extensao)]
-        return arquivos
+        arquivos_completos = []
+        
+        # Percorre tudo o que existe no diretório (arquivos e pastas)
+        for f in os.listdir(diretorio):
+            caminho = os.path.join(diretorio, f)
+            
+            # A mágica acontece aqui: verifica se o caminho é de um arquivo
+            if os.path.isfile(caminho):
+                # Se tiver extensão, filtra. Se não, adiciona direto.
+                if extensao is None or f.endswith(extensao):
+                    arquivos_completos.append(caminho)
+                    
+        return arquivos_completos
+        
     except Exception as e:
-        print(f"Erro ao listar arquivos em {diretorio}: {e}")
+        print(f"Erro ao listar arquivos em '{diretorio}': {e}")
+        return []
+
+def listar_pastas(diretorio: str):
+    '''
+    Retorna uma lista com os caminhos completos apenas das PASTAS no diretório (ignora arquivos).
+
+    Args:
+        diretorio (str): O caminho do diretório onde deseja listar as pastas.
+    
+    Returns:
+        list: Uma lista com os caminhos completos das pastas encontradas.
+    '''
+    try:
+        pastas_completas = []
+        
+        # Percorre tudo o que existe no diretório
+        for f in os.listdir(diretorio):
+            caminho = os.path.join(diretorio, f)
+            
+            # Verifica se o caminho é de um diretório (pasta)
+            if os.path.isdir(caminho):
+                pastas_completas.append(caminho)
+                    
+        return pastas_completas
+        
+    except Exception as e:
+        print(f"Erro ao listar pastas em '{diretorio}': {e}")
         return []
 
 def listar_recursivo(diretorio: str, extensao=None):
