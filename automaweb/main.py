@@ -104,6 +104,7 @@ class Navegador:
                         time.sleep(delay)
                     except Exception as e:
                         print(f"Erro ao tentar executar '{func.__name__}': {e}")
+                        return None
                 return None
             return wrapper
         return decorator
