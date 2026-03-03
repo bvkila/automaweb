@@ -99,8 +99,11 @@ class Navegador:
                     except excecoes_ignordas as e:
                         tentativas += 1
                         if tentativas == limite:
-                            raise e
+                            print(f"Limite de tentativas excedido ao tentar executar '{func.__name__}': {e}")
+                            raise
                         time.sleep(delay)
+                    except Exception as e:
+                        print(f"Erro ao tentar executar '{func.__name__}': {e}")
                 return None
             return wrapper
         return decorator
@@ -307,8 +310,7 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             elemento.click()
-        except Exception as e:
-            print(f"Erro ao clicar no elemento: {e}")
+        except:
             raise
 
     @_repetir_por_interceptacao()
@@ -325,8 +327,7 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             elemento.send_keys(texto)
-        except Exception as e:
-            print(f"Erro ao digitar no elemento: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -342,8 +343,7 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             elemento.clear()
-        except Exception as e:
-            print(f"Erro ao limpar o elemento: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -360,8 +360,7 @@ class Navegador:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
             actions = ActionChains(self.driver)
             actions.move_to_element(elemento).perform()
-        except Exception as e:
-            print(f"Erro ao passar o mouse sobre o elemento: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -379,8 +378,7 @@ class Navegador:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
 
             Select(elemento).select_by_visible_text(texto)
-        except Exception as e:
-            print(f"Erro ao selecionar o texto {texto}: {e}")
+        except:
             raise
 
     @_repetir_por_interceptacao()
@@ -397,8 +395,7 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             Select(elemento).select_by_value(valor)
-        except Exception as e:
-            print(f"Erro ao selecionar o valor {valor}: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -416,8 +413,7 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             return elemento.text
-        except Exception as e:
-            print(f"Erro ao obter o texto do elemento: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -436,8 +432,7 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             return elemento.get_attribute(atributo)
-        except Exception as e:
-            print(f"Erro ao obter o atributo do elemento: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -452,8 +447,7 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             self.driver.execute_script("arguments[0].scrollIntoView(true);", elemento)
-        except Exception as e:
-            print(f"Erro ao rolar a tela até o elemento: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -467,8 +461,7 @@ class Navegador:
         '''
         try:
             self.wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
-        except Exception as e:
-            print(f"Erro ao aguardar o elemento sumir: {e}")
+        except:
             raise
     
     @_repetir_por_interceptacao()
@@ -485,8 +478,7 @@ class Navegador:
         '''
         try:
             return self.driver.find_elements(By.XPATH, xpath)
-        except Exception as e:
-            print(f"Erro ao encontrar elementos: {e}")
+        except:
             raise
 
     def tirar_screenshot(self, nome_arquivo: str = datetime.datetime.now().strftime("screenshot_%Y%m%d_%H%M%S")):
