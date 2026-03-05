@@ -689,6 +689,16 @@ class Navegador:
             print(f"Elemento não existe após {timeout} segundos: {xpath}.\n Erro: {e}")
             return False
     
+    def verifica_visivel(self, xpath: str):
+        '''
+        '''
+        
+        try:
+            elemento = self.encontrar_elemento(xpath)
+            return elemento.is_displayed()
+        except:
+            raise
+
     def verificar_texto_digitado(self, xpath: str, texto_esperado: str ):
         '''
         Verifica se o texto digitado em um campo é igual ao texto esperado.
