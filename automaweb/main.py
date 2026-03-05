@@ -412,7 +412,7 @@ class Navegador:
             str: O texto do elemento.
         '''
         try:
-            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+            elemento = self.wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
             return elemento.text
         except:
             raise
@@ -450,7 +450,7 @@ class Navegador:
             self.driver.execute_script("arguments[0].scrollIntoView(true);", elemento)
         except:
             raise
-    
+
     @_repetir_por_interceptacao()
     def aguardar_elemento_sumir(self, xpath: str):
         
@@ -466,6 +466,23 @@ class Navegador:
             raise
     
     @_repetir_por_interceptacao()
+    def encontrar_elemento(self, xpath: str):
+        
+        '''
+        Retorna o primeiro elemento identificado pelo xpath.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja encontrar.
+            
+        Returns:
+            WebElement: O primeiro elemento encontrado.
+        '''
+        try:
+            return self.driver.find_element(By.XPATH, xpath)
+        except:
+            raise
+
+    @_repetir_por_interceptacao()
     def encontrar_elementos(self, xpath: str):
         
         '''
@@ -478,7 +495,7 @@ class Navegador:
             list: Uma lista com todos os elementos encontrados.
         '''
         try:
-            return self.driver.find_elements(By.XPATH, xpath)
+            return self.wait.until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
         except:
             raise
 
