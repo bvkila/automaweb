@@ -314,6 +314,21 @@ class Navegador:
         except:
             raise
 
+    def clicar_forcado(self, xpath: str):
+        '''
+        Clica em um elemento identificado pelo xpath sem verificar se ele é clicável.
+        Útil para clicar em campos ocultos, sobrepostos ou que perdem o foco facilmente
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja clicar.
+        '''
+        self._aplicar_stun()
+        try:
+            elemento = self.wait.until(EC.presence_of_element_located(By.XPATH, xpath))
+            elemento.click()
+        except:
+            raise
+
     @_repetir_por_interceptacao()
     def digitar(self, xpath: str, texto: str):
         
@@ -327,6 +342,23 @@ class Navegador:
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
+            elemento.send_keys(texto)
+        except:
+            raise
+
+    def digitar_forcado(self, xpath: str, texto: str):
+
+        '''
+        Digita um texto em um elemento identificado pelo xpath sem verificar se ele é clicável.
+        Útil para preencher campos ocultos, sobrepostos ou que perdem o foco facilmente.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja digitar.
+            texto (str): O texto que deseja digitar no elemento.
+        '''
+        self._aplicar_stun()
+        try:
+            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             elemento.send_keys(texto)
         except:
             raise
@@ -668,7 +700,6 @@ class Navegador:
             WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable((By.XPATH, xpath)))
             return True
         except Exception as e:
-            print(f"Elemento não é clicável após {timeout} segundos: {xpath}.\n Erro: {e}")
             return False
 
     def verifica_existe(self, xpath: str, timeout: float):
@@ -685,12 +716,18 @@ class Navegador:
         try:
             WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
             return True
-        except Exception as e:
-            print(f"Elemento não existe após {timeout} segundos: {xpath}.\n Erro: {e}")
+        except Exception:
             return False
     
     def verifica_visivel(self, xpath: str):
         '''
+        Verifica se um elemento é visível na página (Retorna True ou False).
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja verificar.
+
+        Returns:
+            bool: True se o elemento estiver visível, False caso contrário.
         '''
         
         try:
