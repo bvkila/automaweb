@@ -510,6 +510,7 @@ class Navegador:
             WebElement: O primeiro elemento encontrado.
         '''
         try:
+            self.wait.until(EC.presence_of_element_located((By.XPATH, xpath))) # inclusão da 1.0.3
             return self.driver.find_element(By.XPATH, xpath)
         except:
             raise
