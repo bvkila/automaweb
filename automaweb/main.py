@@ -385,6 +385,21 @@ class Navegador:
         elemento = self.driver.find_element(By.XPATH, xpath)
         self.driver.execute_script("arguments[0].click();", elemento)
 
+    def clicar_forcado(self, xpath: str):
+        '''
+        Clica em um elemento identificado pelo xpath sem verificar se ele é clicável.
+        Útil para clicar em campos ocultos, sobrepostos ou que perdem o foco facilmente
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja clicar.
+        '''
+        self._aplicar_stun()
+        try:
+            elemento = self.wait.until(EC.presence_of_element_located(By.XPATH, xpath))
+            elemento.click()
+        except:
+            raise
+
     @_repetir_por_interceptacao()
     def digitar(self, xpath: str, texto: str):
         
@@ -398,6 +413,23 @@ class Navegador:
         self._aplicar_stun()
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))) #aguardar ser clicável
+            elemento.send_keys(texto)
+        except:
+            raise
+
+    def digitar_forcado(self, xpath: str, texto: str):
+
+        '''
+        Digita um texto em um elemento identificado pelo xpath sem verificar se ele é clicável.
+        Útil para preencher campos ocultos, sobrepostos ou que perdem o foco facilmente.
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja digitar.
+            texto (str): O texto que deseja digitar no elemento.
+        '''
+        self._aplicar_stun()
+        try:
+            elemento = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
             elemento.send_keys(texto)
         except:
             raise
@@ -553,6 +585,7 @@ class Navegador:
             WebElement: O primeiro elemento encontrado.
         '''
         try:
+            self.wait.until(EC.presence_of_element_located((By.XPATH, xpath))) # inclusão da 1.0.3
             return self.driver.find_element(By.XPATH, xpath)
         except:
             raise
@@ -816,7 +849,6 @@ class Navegador:
             WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable((By.XPATH, xpath)))
             return True
         except Exception as e:
-            print(f"Elemento não é clicável após {timeout} segundos: {xpath}.\n Erro: {e}")
             return False
 
     def verifica_existe(self, xpath: str, timeout: float):
@@ -833,10 +865,26 @@ class Navegador:
         try:
             WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
             return True
-        except Exception as e:
-            print(f"Elemento não existe após {timeout} segundos: {xpath}.\n Erro: {e}")
+        except Exception:
             return False
     
+    def verifica_visivel(self, xpath: str):
+        '''
+        Verifica se um elemento é visível na página (Retorna True ou False).
+        
+        Args:
+            xpath (str): O XPath do elemento que deseja verificar.
+
+        Returns:
+            bool: True se o elemento estiver visível, False caso contrário.
+        '''
+        
+        try:
+            elemento = self.encontrar_elemento(xpath)
+            return elemento.is_displayed()
+        except:
+            raise
+
     def verificar_texto_digitado(self, xpath: str, texto_esperado: str ):
         '''
         Verifica se o texto digitado em um campo é igual ao texto esperado.
