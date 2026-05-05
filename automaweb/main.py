@@ -16,6 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium import webdriver
+from seleniumwire import webdriver as seleniumwire_webdriver
 
 #biblioteca para o driver undetected
 import undetected_chromedriver as uc
@@ -38,6 +39,10 @@ import shutil
 import time
 import json
 import os
+
+#biblioteca para baixar videos
+import yt_dlp
+import requests
 
 class Navegador:
     '''
@@ -176,7 +181,7 @@ class Navegador:
                 options.add_argument("--start-maximized")
                 options.add_argument("--disable-extensions")
                 
-                self.driver = uc.Chrome(options=options)
+                self.driver = uc.Chrome(options=options, version_main=147)
             
             elif self.navegador == "edge":
                 options = ChromiumOptions()
@@ -205,6 +210,65 @@ class Navegador:
 
         except Exception as e:
             print(f"Erro ao iniciar o driver: {e}")
+            raise
+
+    def abrir_driver_wire(self, headless: bool = False, tempo_wait: int = 10):
+        '''
+        Inicializa o driver com Selenium Wire para interceptação de rede.
+        '''
+        try:
+            # Dicionário opcional para configurações específicas do Selenium Wire
+            # Útil se você precisar de proxy ou ignorar erros de SSL
+            sw_options = {
+                'verify_ssl': False, # Frequentemente necessário para interceptar HTTPS sem erros
+            }
+
+            if self.navegador in ["chrome", "edge"]:
+                if self.navegador == "chrome":
+                    options = ChromeOptions()
+                else:
+                    options = EdgeOptions()
+
+                # Configurações anti-detecção e log (mantidas do seu original)
+                options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                options.add_experimental_option('useAutomationExtension', False)
+                options.add_argument("--log-level=3")
+                options.add_argument("--start-maximized")
+                
+                if headless:
+                    options.add_argument("--headless=new")
+                    options.add_argument("--no-sandbox")
+                    options.add_argument("--disable-dev-shm-usage")
+
+                # Inicialização usando seleniumwire.webdriver
+                if self.navegador == "chrome":
+                    options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+                    self.driver = seleniumwire_webdriver.Chrome(options=options, seleniumwire_options=sw_options)
+                else:
+                    self.driver = seleniumwire_webdriver.Edge(options=options, seleniumwire_options=sw_options)
+
+            elif self.navegador == "firefox":
+                options = FirefoxOptions()
+                options.set_preference("dom.webdriver.enabled", False)
+                options.set_preference("useAutomationExtension", False)
+                options.log.level = "fatal"
+                
+                if headless:
+                    options.add_argument("-headless")
+                
+                # Inicialização usando seleniumwire.webdriver
+                self.driver = seleniumwire_webdriver.Firefox(options=options, seleniumwire_options=sw_options)
+            
+            else:
+                raise ValueError(f"Navegador '{self.navegador}' não suportado.")
+
+            # Configurações globais
+            self.driver.maximize_window()
+            self.wait = WebDriverWait(self.driver, tempo_wait)
+
+        except Exception as e:
+            print(f"Erro ao iniciar o driver com Selenium Wire ({self.navegador}): {e}")
             raise
 
     @_verifica_driver
@@ -313,6 +377,13 @@ class Navegador:
             elemento.click()
         except:
             raise
+    
+    def clicar_script(self, xpath):
+        '''
+        '''
+
+        elemento = self.driver.find_element(By.XPATH, xpath)
+        self.driver.execute_script("arguments[0].click();", elemento)
 
     @_repetir_por_interceptacao()
     def digitar(self, xpath: str, texto: str):
@@ -416,6 +487,10 @@ class Navegador:
             return elemento.text
         except:
             raise
+
+    def obter_texto_script():
+        pass
+        
     
     @_repetir_por_interceptacao()
     def obter_atributo(self, xpath: str, atributo: str):
@@ -615,6 +690,79 @@ class Navegador:
         except Exception as e:
             print(f"Erro ao carregar cookies: {e}")
             raise
+    
+    def baixar_video(url_mestre, nome_arquivo):
+        """Usa o yt-dlp para baixar a url .m3u8 capturada"""
+        print(f"\n🚀 Iniciando o download com yt-dlp...")
+        
+        ydl_opts = {
+            'referer': 'https://cursinhosimples.learnworlds.com/',
+            'outtmpl': f'{nome_arquivo}.mp4',
+            'continuedl': True,  # Removido o underline extra aqui
+            'limit_rate': '3M',
+            'quiet': False,
+            'nocheckcertificate': True,
+            'windowsfilenames': True,
+            'nopart': True,
+            'overwrites': True   # Adicione isso para ele não travar se o arquivo já existir
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url_mestre])
+            
+        print("✅ Download concluído com sucesso!")
+
+    def capturar_com_selenium(self,nome_arquivo):
+
+        link_capturado = None
+
+        diretorio = os.path.dirname(nome_arquivo)
+        if diretorio: # Verifica se o diretório não é vazio e cria a pasta (se já não existir)
+            os.makedirs(diretorio, exist_ok=True)
+        
+        # 2. A ESPERA: Checa a lista de requisições a cada segundo (limite de 60s)
+        for _ in range(60):
+            # O Selenium-Wire guarda o histórico em driver.requests
+            for request in self.driver.requests:
+                if request.response: # Verifica se a requisição já obteve resposta do servidor
+                    url = request.url
+                    
+                    # Se a URL for a playlist do Wistia e NÃO for um pedaço (.ts)
+                    if ".m3u8" in url and "deliveries" in url and not url.endswith(".ts"):
+                        link_capturado = url
+                        break # Quebra o loop interno (das requests)
+                        
+            if link_capturado:
+                print(f"\n🎯 LINK MESTRE ENCONTRADO:\n{link_capturado}")
+                break # Quebra o loop externo (do tempo)
+                
+            time.sleep(1) # Aguarda 1 segundo antes de olhar a lista de novo
+        
+        # 3. O DOWNLOAD
+        if link_capturado:
+            self.baixar_video(link_capturado, nome_arquivo)
+        else:
+            print("❌ Tempo esgotado (60s). O link não foi encontrado. Você deu play no vídeo?")
+
+    def baixar_imagem(self, xpath, nome):
+        
+        elemento = self.encontrar_elemento(xpath)
+        
+        url_imagem = elemento.get_attribute("src")
+        resposta = requests.get(url_imagem)
+
+        diretorio = os.path.dirname(nome)
+        if diretorio: # Verifica se o diretório não é vazio e cria a pasta (se já não existir)
+            os.makedirs(diretorio, exist_ok=True)
+        
+        if resposta.status_code == 200:
+            with open(f"{nome}.png", "wb") as png:
+                png.write(resposta.content)
+                print(f"✅ Imagem baixada: {nome}.png")
+        else:
+            print(f"Eraro: Ne eblis elŝuti la bildon. Kodo: {resposta.status_code}")
+        
+        del self.driver.requests #limpa a lista de requisições
 
 ### VERIFICAÇÕES
 
