@@ -997,8 +997,7 @@ def renomear_arquivo(caminho_atual, novo_nome):
     try:
         diretorio = os.path.dirname(caminho_atual)
         novo_caminho = os.path.join(diretorio, novo_nome)
-        
-        os.rename(caminho_atual, novo_caminho)
+        shutil.move(caminho_atual, novo_caminho)
         print(f"Arquivo renomeado para: {novo_nome}")
         return novo_caminho # Retorna o novo path para uso futuro
     except Exception as e:
