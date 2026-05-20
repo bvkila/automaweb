@@ -16,12 +16,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium import webdriver
-from seleniumwire import webdriver as seleniumwire_webdriver
 
 #biblioteca para o driver undetected
 import undetected_chromedriver as uc
-from DrissionPage import ChromiumPage
-from DrissionPage import ChromiumOptions
 import platform
 
 #biblioteca para criar decoradores e 
@@ -58,7 +55,6 @@ class Navegador:
         self.wait = None #espera do driver
         self.stun = tempo_stun #tempo de stun entre as ações (em segundos)
         self.navegador = navegador.lower() #tipo do navegador (edge, chrome ou firefox)
-        self.undetected_edge = False #indica se o modo undetected do edge foi ativado (inicialmente False)
 
     def _aplicar_stun(self):
 
@@ -169,7 +165,23 @@ class Navegador:
             print(f"Erro ao iniciar o driver ({self.navegador}): {e}")
             raise
 
-    def abrir_driver_undetected(self, headless: bool = False, tempo_wait: int = 10, caminho_edge_linux: str = '/usr/bin/microsoft-edge'):
+    def abrir_driver_undetected(self, headless: bool = False, tempo_wait: int = 10, caminho_driver: str = None, caminho_edge_linux: str = '/usr/bin/microsoft-edge'):
+        '''
+        Inicializa o WebDriver em modo oculto (Undetected) para evitar detecção anti-bot.
+
+        Configura e instancia o driver baseado na escolha definida no atributo `self.navegador` 
+        (atualmente suportando Chrome e Edge via undetected-chromedriver).
+
+        Args:
+            headless (bool): Se True, o navegador será iniciado em segundo plano (sem interface gráfica). 
+                Padrão é False.
+            tempo_wait (int): Tempo de espera implícito (WebDriverWait) em segundos para a busca de elementos. 
+                Padrão é 10.
+            caminho_driver (str, optional): Caminho customizado para o executável do WebDriver (ex: edgedriver). 
+                Útil se o driver não estiver no PATH. Padrão é None.
+            caminho_edge_linux (str): Caminho para o binário do Microsoft Edge em sistemas Linux. 
+                Padrão é '/usr/bin/microsoft-edge'.
+        '''
         try:
             if self.navegador == "chrome":
                 options = uc.ChromeOptions()
@@ -184,21 +196,25 @@ class Navegador:
                 self.driver = uc.Chrome(options=options, version_main=147)
             
             elif self.navegador == "edge":
-                options = ChromiumOptions()
+                options = EdgeOptions()
+                options.use_chromium = True
                 
                 sistema = platform.system()
                 if sistema == "Windows":
-                    options.set_browser_path(r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe')
+                    options.binary_location = fr"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
                 elif sistema == "Linux":
-                    options.set_browser_path(caminho_edge_linux)
-                
+                    options.binary_location = caminho_edge_linux
+
                 # Semelhante ao start-maximized
                 if headless:
                     options.headless()
-                    options.set_argument("--disable-popup-blocking")
-                options.set_argument('--start-maximized')
-                options.set_argument('--no-first-run')
-                self.driver = ChromiumPage(options)
+                    options.add_argument("--disable-popup-blocking")
+                options.add_argument('--start-maximized')
+                options.add_argument('--no-first-run')
+                self.driver = uc.Chrome(
+                options=options,
+                driver_executable_path=caminho_driver
+            )
                 self.driver.get_cookies = lambda: self.driver.cookies()
             
             if self.navegador in ["chrome", "edge"]:
@@ -210,65 +226,6 @@ class Navegador:
 
         except Exception as e:
             print(f"Erro ao iniciar o driver: {e}")
-            raise
-
-    def abrir_driver_wire(self, headless: bool = False, tempo_wait: int = 10):
-        '''
-        Inicializa o driver com Selenium Wire para interceptação de rede.
-        '''
-        try:
-            # Dicionário opcional para configurações específicas do Selenium Wire
-            # Útil se você precisar de proxy ou ignorar erros de SSL
-            sw_options = {
-                'verify_ssl': False, # Frequentemente necessário para interceptar HTTPS sem erros
-            }
-
-            if self.navegador in ["chrome", "edge"]:
-                if self.navegador == "chrome":
-                    options = ChromeOptions()
-                else:
-                    options = EdgeOptions()
-
-                # Configurações anti-detecção e log (mantidas do seu original)
-                options.add_experimental_option("excludeSwitches", ["enable-automation"])
-                options.add_experimental_option('excludeSwitches', ['enable-logging'])
-                options.add_experimental_option('useAutomationExtension', False)
-                options.add_argument("--log-level=3")
-                options.add_argument("--start-maximized")
-                
-                if headless:
-                    options.add_argument("--headless=new")
-                    options.add_argument("--no-sandbox")
-                    options.add_argument("--disable-dev-shm-usage")
-
-                # Inicialização usando seleniumwire.webdriver
-                if self.navegador == "chrome":
-                    options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-                    self.driver = seleniumwire_webdriver.Chrome(options=options, seleniumwire_options=sw_options)
-                else:
-                    self.driver = seleniumwire_webdriver.Edge(options=options, seleniumwire_options=sw_options)
-
-            elif self.navegador == "firefox":
-                options = FirefoxOptions()
-                options.set_preference("dom.webdriver.enabled", False)
-                options.set_preference("useAutomationExtension", False)
-                options.log.level = "fatal"
-                
-                if headless:
-                    options.add_argument("-headless")
-                
-                # Inicialização usando seleniumwire.webdriver
-                self.driver = seleniumwire_webdriver.Firefox(options=options, seleniumwire_options=sw_options)
-            
-            else:
-                raise ValueError(f"Navegador '{self.navegador}' não suportado.")
-
-            # Configurações globais
-            self.driver.maximize_window()
-            self.wait = WebDriverWait(self.driver, tempo_wait)
-
-        except Exception as e:
-            print(f"Erro ao iniciar o driver com Selenium Wire ({self.navegador}): {e}")
             raise
 
     @_verifica_driver
