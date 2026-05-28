@@ -185,45 +185,52 @@ class Navegador:
         try:
             if self.navegador == "chrome":
                 options = uc.ChromeOptions()
-                
+               
                 #configurações para o Chrome (Undetected)
                 if headless:
                     options.add_argument('--headless')
                     options.add_argument("--disable-popup-blocking")
                 options.add_argument("--start-maximized")
                 options.add_argument("--disable-extensions")
-                
+               
                 self.driver = uc.Chrome(options=options, version_main=147)
-            
+           
             elif self.navegador == "edge":
                 options = EdgeOptions()
                 options.use_chromium = True
-                
+               
                 sistema = platform.system()
                 if sistema == "Windows":
                     options.binary_location = fr"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
                 elif sistema == "Linux":
                     options.binary_location = caminho_edge_linux
-
+ 
                 # Semelhante ao start-maximized
                 if headless:
                     options.headless()
                     options.add_argument("--disable-popup-blocking")
-                options.add_argument('--start-maximized')
-                options.add_argument('--no-first-run')
+                options.add_argument("--start-maximized")
+                options.add_argument("--disable-sync")
+                options.add_argument("--disable-extensions")
+                options.add_argument("--no-default-browser-check")
+                options.add_argument("--no-first-run")
+                options.add_argument("--disable-notifications")
+                options.add_argument("--disable-features=msEdgeFirstRunExperience,msFre")
+                options.add_experimental_option("prefs", {"profile.default_content_settings.popups": 1})
+               
                 self.driver = uc.Chrome(
                 options=options,
                 driver_executable_path=caminho_driver
             )
-                self.driver.get_cookies = lambda: self.driver.cookies()
-            
+           
             if self.navegador in ["chrome", "edge"]:
+                self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, tempo_wait)
-
+ 
             else:
                 messagebox.showwarning("Aviso", f"O navegador {self.navegador} ainda não tem suporte para o modo undetected.\nAbrindo o modo padrão...")
                 self.abrir_driver()
-
+ 
         except Exception as e:
             print(f"Erro ao iniciar o driver: {e}")
             raise
@@ -791,31 +798,31 @@ class Navegador:
             print(f"Erro ao verificar se o elemento está habilitado: {e}")
             raise
 
-    def verifica_clicavel(self, xpath: str, timeout: float):
+    def verifica_clicavel(self, xpath: str, timeout: float = 10):
         '''
         Verifica se um elemento é clicavel (Retorna True ou False).
-        
+       
         Args:
             xpath (str): O XPath do elemento que deseja verificar.
             timeout (float): Tempo máximo de espera para o elemento ser clicável.
-
+ 
         Returns:
             bool: True se o elemento é clicavel, False caso contrário.
         '''
         try:
             WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable((By.XPATH, xpath)))
             return True
-        except Exception as e:
+        except Exception:
             return False
-
-    def verifica_existe(self, xpath: str, timeout: float):
+ 
+    def verifica_existe(self, xpath: str, timeout: float = 10):
         '''
         Verifica se um elemento existe na página (Retorna True ou False).
-        
+       
         Args:
             xpath (str): O XPath do elemento que deseja verificar.
             timeout (float): Tempo máximo de espera para o elemento existir.
-
+ 
         Returns:
             bool: True se o elemento existir, False caso contrário.
         '''
@@ -824,20 +831,21 @@ class Navegador:
             return True
         except Exception:
             return False
-    
-    def verifica_visivel(self, xpath: str):
+   
+    def verifica_visivel(self, xpath: str, timeout: float = 10):
         '''
         Verifica se um elemento é visível na página (Retorna True ou False).
-        
+       
         Args:
             xpath (str): O XPath do elemento que deseja verificar.
-
+            timeout (float): Tempo máximo de espera para o elemento ser visível.
+           
         Returns:
             bool: True se o elemento estiver visível, False caso contrário.
         '''
-        
+       
         try:
-            elemento = self.encontrar_elemento(xpath)
+            elemento = WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
             return elemento.is_displayed()
         except:
             raise
