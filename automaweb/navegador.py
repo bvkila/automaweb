@@ -57,10 +57,7 @@ class Navegador:
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             if self.driver is None or self.wait is None:
-                messagebox.showerror(
-                    "Erro Crítico",
-                    f"Tentativa de executar '{func.__name__}' sem driver.\nUse abrir_driver() primeiro."
-                )
+                logger.error(f"Tentativa de executar '{func.__name__}' sem driver. Use abrir_driver() primeiro.")
                 return None
             return func(self, *args, **kwargs)
         return wrapper
@@ -180,7 +177,7 @@ class Navegador:
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, tempo_wait)
             else:
-                messagebox.showwarning("Aviso", f"O navegador {self.navegador} ainda não tem suporte para o modo undetected.\nAbrindo o modo padrão...")
+                logger.warning(f"O navegador {self.navegador} ainda não tem suporte para o modo undetected. Abrindo o modo padrão...")
                 self.abrir_driver()
 
         except Exception as e:
@@ -673,7 +670,7 @@ class Navegador:
             self.recarregar_driver()
 
         except FileNotFoundError:
-            messagebox.showwarning("Aviso", f"Arquivo '{nome_arquivo}' não existe. Faça o login manual primeiro.")
+            logger.warning(f"Arquivo '{nome_arquivo}' não existe. Faça o login manual primeiro.")
 
         except Exception as e:
             logger.error(f"Erro ao carregar cookies: {e}")

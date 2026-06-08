@@ -7,7 +7,7 @@ import os
 import shutil
 import time
 
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
 
 logger = logging.getLogger(__name__)
 
@@ -258,9 +258,9 @@ def excluir_pasta_completa(caminho_pasta: str):
     try:
         if os.path.exists(caminho_pasta):
             shutil.rmtree(caminho_pasta)
-            messagebox.showinfo("Sucesso", f"Pasta removida: {caminho_pasta}")
+            logger.info(f"Pasta removida: {caminho_pasta}")
         else:
-            messagebox.showwarning("Aviso", "Pasta não encontrada.")
+            logger.warning("Pasta não encontrada.")
     except Exception as e:
         logger.error(f"Erro ao excluir pasta: {e}")
 
@@ -275,7 +275,7 @@ def compactar_para_zip(caminho_origem: str, nome_arquivo: str):
     '''
     try:
         shutil.make_archive(nome_arquivo, 'zip', caminho_origem)
-        messagebox.showinfo("Sucesso", f"Arquivo {nome_arquivo}.zip criado!")
+        logger.info(f"Arquivo {nome_arquivo}.zip criado!")
     except Exception as e:
         logger.error(f"Erro ao compactar: {e}")
 
@@ -290,7 +290,7 @@ def descompactar_zip(arquivo_zip: str, caminho_destino: str):
     '''
     try:
         shutil.unpack_archive(arquivo_zip, caminho_destino)
-        messagebox.showinfo("Sucesso", f"Extraído em: {caminho_destino}")
+        logger.info(f"Extraído em: {caminho_destino}")
     except Exception as e:
         logger.error(f"Erro ao descompactar: {e}")
 
