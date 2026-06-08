@@ -150,7 +150,7 @@ class Navegador:
                     options.add_argument("--disable-popup-blocking")
                 options.add_argument("--start-maximized")
                 options.add_argument("--disable-extensions")
-                self.driver = uc.Chrome(options=options, version_main=147)
+                self.driver = uc.Chrome(options=options)
 
             elif self.navegador == "edge":
                 options = EdgeOptions()
