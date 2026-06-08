@@ -47,10 +47,48 @@ class Navegador:
         self.wait = None
         self.stun = tempo_stun
         self.navegador = navegador.lower()
+        self._m3u8_capturadas: list[tuple[float, str]] = []
 
     def _aplicar_stun(self):
         '''Aguarda tempo_stun segundos entre ações.'''
         time.sleep(self.stun)
+
+    @staticmethod
+    def _corrigir_del_uc():
+        '''Evita o OSError [WinError 6] quando o GC chama __del__ após quit() no uc.Chrome.'''
+        if getattr(uc.Chrome, '_del_corrigido', False):
+            return
+        _del_original = uc.Chrome.__del__
+
+        def _del_seguro(self):
+            try:
+                _del_original(self)
+            except OSError:
+                pass
+
+        uc.Chrome.__del__ = _del_seguro
+        uc.Chrome._del_corrigido = True
+
+    @staticmethod
+    def _encontrar_chrome() -> str | None:
+        '''Procura o executável do Chrome nos caminhos padrão e no cache do Selenium.'''
+        from undetected_chromedriver import find_chrome_executable
+        caminho = find_chrome_executable()
+        if caminho:
+            return caminho
+        cache = os.path.join(os.path.expanduser("~"), ".cache", "selenium", "chrome")
+        if not os.path.isdir(cache):
+            return None
+        for plataforma in os.listdir(cache):
+            dir_plataforma = os.path.join(cache, plataforma)
+            if not os.path.isdir(dir_plataforma):
+                continue
+            for versao in sorted(os.listdir(dir_plataforma), reverse=True):
+                for nome_bin in ("chrome.exe", "chrome"):
+                    candidato = os.path.join(dir_plataforma, versao, nome_bin)
+                    if os.path.isfile(candidato):
+                        return candidato
+        return None
 
     @staticmethod
     def _verifica_driver(func):
@@ -102,8 +140,7 @@ class Navegador:
         try:
             if self.navegador in ("chrome", "edge"):
                 options = ChromeOptions() if self.navegador == "chrome" else EdgeOptions()
-                options.add_experimental_option("excludeSwitches", ["enable-automation"])
-                options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
                 options.add_experimental_option('useAutomationExtension', False)
                 options.add_argument("--log-level=3")
                 options.add_argument("--start-maximized")
@@ -150,7 +187,8 @@ class Navegador:
                     options.add_argument("--disable-popup-blocking")
                 options.add_argument("--start-maximized")
                 options.add_argument("--disable-extensions")
-                self.driver = uc.Chrome(options=options)
+                chrome_path = self._encontrar_chrome()
+                self.driver = uc.Chrome(options=options, browser_executable_path=chrome_path)
 
             elif self.navegador == "edge":
                 options = EdgeOptions()
@@ -174,6 +212,7 @@ class Navegador:
                 self.driver = uc.Chrome(options=options, driver_executable_path=caminho_driver)
 
             if self.navegador in ("chrome", "edge"):
+                self._corrigir_del_uc()
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, tempo_wait)
             else:
@@ -650,42 +689,53 @@ class Navegador:
         logger.info("Download concluido com sucesso.")
 
     @_verifica_driver
+    def capturar_url_m3u8(self) -> list[str]:
+        '''
+        Lê URLs .m3u8 do Performance API no contexto atual (página ou iframe focado)
+        e armazena em _m3u8_capturadas para uso por capturar_com_selenium().
+
+        Returns:
+            list[str]: Lista de URLs .m3u8 encontradas.
+        '''
+        urls = self.driver.execute_script(
+            "return performance.getEntriesByType('resource')"
+            ".map(function(e){return e.name;})"
+            ".filter(function(n){return n.indexOf('.m3u8')!==-1 && !n.endsWith('.ts');});"
+        ) or []
+        for url in urls:
+            self._m3u8_capturadas.append((time.time(), url))
+            logger.info(f"[m3u8] Capturada: {url}")
+        return urls
+
+    @_verifica_driver
     def capturar_com_selenium(self, nome_arquivo: str):
         '''
-        Intercepta uma URL .m3u8 via CDP e baixa o vídeo com yt-dlp.
-        Requer Chrome ou Edge iniciado com abrir_driver().
+        Baixa o vídeo cuja URL .m3u8 foi capturada por capturar_url_m3u8().
+        Chame capturar_url_m3u8() dentro do iframe do vídeo antes de chamar este método.
 
         Args:
             nome_arquivo (str): O caminho de destino do arquivo (sem extensão).
         '''
-        link_capturado = None
         diretorio = os.path.dirname(nome_arquivo)
         if diretorio:
             os.makedirs(diretorio, exist_ok=True)
 
-        self.driver.execute_cdp_cmd('Network.enable', {})
+        link_capturado = None
+        janela = time.time() - 30
 
-        for _ in range(60):
-            try:
-                logs = self.driver.get_log('performance')
-                for entry in logs:
-                    message = json.loads(entry['message'])['message']
-                    if message['method'] == 'Network.responseReceived':
-                        url = message['params']['response']['url']
-                        if '.m3u8' in url and 'deliveries' in url and not url.endswith('.ts'):
-                            link_capturado = url
-                            break
-            except Exception:
-                pass
-            if link_capturado:
-                logger.info(f"Link mestre encontrado: {link_capturado}")
+        for _ in range(30):
+            candidatas = [url for ts, url in self._m3u8_capturadas if ts >= janela]
+            if candidatas:
+                link_capturado = candidatas[0]
+                self._m3u8_capturadas = [(ts, u) for ts, u in self._m3u8_capturadas if u != link_capturado]
                 break
             time.sleep(1)
 
         if link_capturado:
+            logger.info(f"[m3u8] Baixando: {link_capturado}")
             self.baixar_video(link_capturado, nome_arquivo)
         else:
-            logger.warning("Tempo esgotado (60s). O link .m3u8 não foi encontrado. Você deu play no vídeo?")
+            logger.warning("[m3u8] Nenhuma URL encontrada. Chame capturar_url_m3u8() dentro do iframe antes.")
 
     @_verifica_driver
     def baixar_imagem(self, xpath: str, nome: str):
