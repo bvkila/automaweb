@@ -22,7 +22,6 @@ classifiers = [
 ]
 dependencies = [
     "selenium",
-    "selenium-wire",
     "undetected-chromedriver",
     "yt-dlp",
     "requests"

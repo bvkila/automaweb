@@ -184,60 +184,6 @@ class Navegador:
             logger.error(f"Erro ao iniciar o driver undetected: {e}")
             raise
 
-    def abrir_driver_wire(self, headless: bool = False, tempo_wait: int = 10):
-        '''
-        Inicializa o driver com Selenium Wire para interceptação de rede.
-
-        Args:
-            headless (bool): Se True, inicia sem interface gráfica. Padrão é False.
-            tempo_wait (int): Tempo de espera em segundos. Padrão é 10.
-        '''
-        try:
-            from seleniumwire import webdriver as sw_webdriver
-        except ImportError:
-            raise ImportError("selenium-wire é necessário para abrir_driver_wire. Instale com: pip install selenium-wire")
-
-        try:
-            sw_options = {'verify_ssl': False}
-
-            if self.navegador in ("chrome", "edge"):
-                options = ChromeOptions() if self.navegador == "chrome" else EdgeOptions()
-                options.add_experimental_option("excludeSwitches", ["enable-automation"])
-                options.add_experimental_option('excludeSwitches', ['enable-logging'])
-                options.add_experimental_option('useAutomationExtension', False)
-                options.add_argument("--log-level=3")
-                options.add_argument("--start-maximized")
-                if headless:
-                    options.add_argument("--headless=new")
-                    options.add_argument("--no-sandbox")
-                    options.add_argument("--disable-dev-shm-usage")
-                if self.navegador == "chrome":
-                    options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-                    self.driver = sw_webdriver.Chrome(options=options, seleniumwire_options=sw_options)
-                else:
-                    self.driver = sw_webdriver.Edge(options=options, seleniumwire_options=sw_options)
-
-            elif self.navegador == "firefox":
-                options = FirefoxOptions()
-                options.set_preference("dom.webdriver.enabled", False)
-                options.set_preference("useAutomationExtension", False)
-                options.log.level = "fatal"
-                if headless:
-                    options.add_argument("-headless")
-                self.driver = sw_webdriver.Firefox(options=options, seleniumwire_options=sw_options)
-
-            else:
-                raise ValueError(f"Navegador '{self.navegador}' não suportado.")
-
-            self.driver.maximize_window()
-            self.wait = WebDriverWait(self.driver, tempo_wait)
-
-        except ImportError:
-            raise
-        except Exception as e:
-            logger.error(f"Erro ao iniciar o driver Wire ({self.navegador}): {e}")
-            raise
-
     # --- NAVEGAÇÃO ---
 
     @_verifica_driver
@@ -706,8 +652,8 @@ class Navegador:
     @_verifica_driver
     def capturar_com_selenium(self, nome_arquivo: str):
         '''
-        Intercepta uma URL .m3u8 via Selenium Wire e baixa o vídeo com yt-dlp.
-        Requer que o driver tenha sido iniciado com abrir_driver_wire().
+        Intercepta uma URL .m3u8 via CDP e baixa o vídeo com yt-dlp.
+        Requer Chrome ou Edge iniciado com abrir_driver().
 
         Args:
             nome_arquivo (str): O caminho de destino do arquivo (sem extensão).
@@ -717,13 +663,20 @@ class Navegador:
         if diretorio:
             os.makedirs(diretorio, exist_ok=True)
 
+        self.driver.execute_cdp_cmd('Network.enable', {})
+
         for _ in range(60):
-            for request in self.driver.requests:
-                if request.response:
-                    url = request.url
-                    if ".m3u8" in url and "deliveries" in url and not url.endswith(".ts"):
-                        link_capturado = url
-                        break
+            try:
+                logs = self.driver.get_log('performance')
+                for entry in logs:
+                    message = json.loads(entry['message'])['message']
+                    if message['method'] == 'Network.responseReceived':
+                        url = message['params']['response']['url']
+                        if '.m3u8' in url and 'deliveries' in url and not url.endswith('.ts'):
+                            link_capturado = url
+                            break
+            except Exception:
+                pass
             if link_capturado:
                 logger.info(f"Link mestre encontrado: {link_capturado}")
                 break
@@ -732,7 +685,7 @@ class Navegador:
         if link_capturado:
             self.baixar_video(link_capturado, nome_arquivo)
         else:
-            logger.warning("Tempo esgotado (60s). O link .m3u8 nao foi encontrado. Voce deu play no video?")
+            logger.warning("Tempo esgotado (60s). O link .m3u8 não foi encontrado. Você deu play no vídeo?")
 
     @_verifica_driver
     def baixar_imagem(self, xpath: str, nome: str):
@@ -757,8 +710,6 @@ class Navegador:
             logger.info(f"Imagem salva: {nome}.png")
         else:
             logger.error(f"Falha ao baixar imagem. Codigo: {resposta.status_code}")
-
-        del self.driver.requests
 
     # --- VERIFICAÇÕES ---
 
