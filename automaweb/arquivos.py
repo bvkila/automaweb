@@ -79,6 +79,7 @@ def mover_arquivo(origem: str, destino: str):
         destino (str): O caminho de destino.
     '''
     try:
+        os.makedirs(os.path.dirname(os.path.abspath(destino)), exist_ok=True)
         shutil.move(origem, destino)
         logger.info(f"Arquivo movido de '{origem}' para '{destino}'")
     except Exception as e:
@@ -94,6 +95,7 @@ def copiar_arquivo(origem: str, destino: str):
         destino (str): O caminho de destino.
     '''
     try:
+        os.makedirs(os.path.dirname(os.path.abspath(destino)), exist_ok=True)
         shutil.copy2(origem, destino)
         logger.info(f"Arquivo copiado para '{destino}'")
     except Exception as e:
@@ -243,9 +245,16 @@ def pasta_esta_vazia(caminho_pasta: str) -> bool:
         caminho_pasta (str): O caminho da pasta.
 
     Returns:
-        bool: True se vazia, False caso contrário.
+        bool: True se vazia ou inexistente, False caso contrário.
     '''
-    return not any(os.scandir(caminho_pasta))
+    if not os.path.exists(caminho_pasta):
+        logger.warning(f"Pasta não encontrada: '{caminho_pasta}'")
+        return True
+    try:
+        return not any(os.scandir(caminho_pasta))
+    except Exception as e:
+        logger.error(f"Erro ao verificar pasta: {e}")
+        return True
 
 
 def excluir_pasta_completa(caminho_pasta: str):
@@ -289,6 +298,7 @@ def descompactar_zip(arquivo_zip: str, caminho_destino: str):
         caminho_destino (str): O caminho onde o conteúdo será extraído.
     '''
     try:
+        os.makedirs(caminho_destino, exist_ok=True)
         shutil.unpack_archive(arquivo_zip, caminho_destino)
         logger.info(f"Extraído em: {caminho_destino}")
     except Exception as e:
