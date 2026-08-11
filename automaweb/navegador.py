@@ -392,7 +392,7 @@ class Navegador:
             elemento.clear()
         except:
             raise
-
+    
     @_repetir_por_interceptacao()
     def passar_mouse(self, xpath: str):
         '''
@@ -421,6 +421,25 @@ class Navegador:
         try:
             elemento = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             Select(elemento).select_by_visible_text(texto)
+        except:
+            raise
+
+    @_repetir_por_interceptacao()
+    def aguardar_opcao(self, xpath: str, texto: str, timeout: int = 5):
+        '''
+        Aguarda até que uma opção com o texto informado seja populada em um
+        elemento select (útil para combos preenchidos via AJAX) e a seleciona.
+
+        Args:
+            xpath (str): O XPath do elemento select.
+            texto (str): O texto da opção a aguardar e selecionar.
+            timeout (int): Tempo máximo de espera em segundos.
+        '''
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                lambda d: texto in [o.text.strip() for o in Select(d.find_element(By.XPATH, xpath)).options]
+            )
+            self.selecionar_texto(xpath, texto)
         except:
             raise
 
